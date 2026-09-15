@@ -17,6 +17,10 @@ check(){ if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 (attendu «$3», obtenu �
 
 git_c() { git -C "$1" -c user.email=test@local -c user.name=test "${@:2}"; }
 
+# Empreinte complète d'une cible : contenu de chaque fichier et arborescence.
+snapshot() { ( cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort
+                       cd "$1" && find . -mindepth 1 -type d | sort ); }
+
 # Source git isolée. v0.0.0-test est l'état courant ; v0.0.1-test modifie un
 # fichier du corpus et en retire un autre, pour exercer une vraie montée de
 # version et la suppression d'un fichier sorti de la charge utile.
@@ -128,10 +132,10 @@ check "update refuse un dépôt sans corpus" "$rc" "1"
 "$SCRIPT" check "$T2" >/dev/null 2>&1; rc=$?
 check "check refuse un dépôt sans corpus" "$rc" "1"
 printf 'instructions maison a ne pas perdre\n' > "$T2/AGENTS.md"
+before_snap="$(snapshot "$T2")"
 "$SCRIPT" install "$T2" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1; rc=$?
 check "install refuse d'écraser un fichier existant" "$rc" "1"
-grep -q "instructions maison" "$T2/AGENTS.md" && ok "le fichier existant est intact" || ko "le fichier existant est intact"
-[ -e "$T2/AGENTIC_RULES" ] && ko "un refus ne doit rien créer" || ok "un refus ne crée rien"
+[ "$(snapshot "$T2")" = "$before_snap" ] && ok "le refus laisse la cible strictement inchangée" || ko "le refus laisse la cible strictement inchangée"
 "$SCRIPT" install "$T2" --ref v0.0.0-test --source "$SRC" --force >/dev/null 2>&1; rc=$?
 check "--force installe malgré le conflit" "$rc" "0"
 T3="$WORK/depot trois"; mkdir -p "$T3"
@@ -152,6 +156,48 @@ TMPD="$WORK/tmp"; mkdir -p "$TMPD"
 T4="$WORK/depot quatre"; mkdir -p "$T4"
 TMPDIR="$TMPD" "$SCRIPT" install "$T4" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1
 [ -z "$(ls -A "$TMPD")" ] && ok "aucun temporaire laissé derrière" || ko "aucun temporaire laissé derrière"
+
+printf 'comparaison à la source\n'
+T5="$WORK/depot cinq"; mkdir -p "$T5"
+"$SCRIPT" install "$T5" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1
+fill_values "$T5"
+"$SCRIPT" check "$T5" --remote --source "$SRC" >/dev/null 2>&1; rc=$?
+check "check --remote réussit sur une copie fidèle" "$rc" "0"
+# Falsification cohérente : le fichier et son empreinte sont modifiés ensemble.
+printf '\nregle glissee en douce\n' >> "$T5/AGENTIC_RULES/MAIN_RULES.md"
+newh="$(sha256sum "$T5/AGENTIC_RULES/MAIN_RULES.md" | cut -d' ' -f1)"
+sed -i'' -e "s|^sha256 AGENTIC_RULES/MAIN_RULES.md .*|sha256 AGENTIC_RULES/MAIN_RULES.md $newh|" "$T5/AGENTIC_RULES/.provenance"
+"$SCRIPT" check "$T5" >/dev/null 2>&1; rc=$?
+check "le contrôle local ne voit pas une falsification cohérente" "$rc" "0"
+out="$("$SCRIPT" check "$T5" --remote --source "$SRC" 2>&1)"; rc=$?
+check "la comparaison à la source la voit" "$rc" "1"
+printf '%s' "$out" | grep -q "DIFFERENT DE LA SOURCE" && ok "la falsification est nommée" || ko "la falsification est nommée"
+"$SCRIPT" update "$T5" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1
+"$SCRIPT" check "$T5" --remote --source "$WORK/source absente" >/dev/null 2>&1; rc=$?
+check "une source injoignable fait échouer --remote" "$rc" "1"
+
+printf 'MANIFEST hostile\n'
+printf 'a ne pas supprimer\n' > "$WORK/temoin externe.txt"
+printf '../temoin externe.txt\n' >> "$T5/AGENTIC_RULES/MANIFEST"
+"$SCRIPT" update "$T5" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1; rc=$?
+check "un chemin remontant fait échouer la mise à jour" "$rc" "1"
+[ -f "$WORK/temoin externe.txt" ] && ok "le fichier hors cible survit" || ko "le fichier hors cible survit"
+
+printf 'retour arrière\n'
+T6="$WORK/depot six"; mkdir -p "$T6"
+"$SCRIPT" install "$T6" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1
+fill_values "$T6"
+# Dernier fichier de la charge utile rendu inremplaçable : la bascule échoue
+# après avoir déjà déplacé les précédents.
+rm "$T6/AGENTIC_RULES/project.config.example.yml"
+mkdir -p "$T6/AGENTIC_RULES/project.config.example.yml/occupe"
+printf 'x\n' > "$T6/AGENTIC_RULES/project.config.example.yml/occupe/x"
+"$SCRIPT" update "$T6" --ref v0.0.1-test --source "$SRC" >/dev/null 2>&1; rc=$?
+check "une bascule impossible échoue" "$rc" "1"
+grep -q "ligne ajoutee en v0.0.1" "$T6/AGENTIC_RULES/REVIEWERS.md" \
+  && ko "les fichiers déjà déplacés sont rendus" || ok "les fichiers déjà déplacés sont rendus"
+[ -f "$T6/QWEN.md" ] && ok "aucun retrait n'a lieu avant une bascule réussie" || ko "aucun retrait n'a lieu avant une bascule réussie"
+grep -q "^tag=v0.0.0-test" "$T6/AGENTIC_RULES/.provenance" && ok "la provenance n'annonce pas la version échouée" || ko "la provenance n'annonce pas la version échouée"
 
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

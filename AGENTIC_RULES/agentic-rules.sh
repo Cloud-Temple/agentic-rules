@@ -38,7 +38,16 @@ sha256() {
 read_manifest() {
   local tree="$1"
   [ -f "$tree/$MANIFEST" ] || die "MANIFEST absent de $tree"
-  grep -v '^[[:space:]]*#' "$tree/$MANIFEST" | grep -v '^[[:space:]]*$'
+  local line
+  while IFS= read -r line; do
+    case "$line" in
+      /*) die "chemin absolu interdit dans le MANIFEST : $line" ;;
+    esac
+    case "/$line/" in
+      */../*) die "chemin remontant interdit dans le MANIFEST : $line" ;;
+    esac
+    printf '%s\n' "$line"
+  done <<< "$(grep -v '^[[:space:]]*#' "$tree/$MANIFEST" | grep -v '^[[:space:]]*$')"
 }
 
 fetch_source() {
@@ -69,14 +78,39 @@ stage_payload() {
 }
 
 commit_payload() {
-  local src="$1" stage="$2" target="$3" f payload
+  local src="$1" stage="$2" target="$3" f payload backup done_list=""
   payload="$(read_manifest "$src")"
+  backup="$(tmpdir)/backup"
   while IFS= read -r f; do
     mkdir -p "$target/$(dirname "$f")"
-    mv "$stage/$f" "$target/$f" || die "installation impossible : $f"
+    # mv déplacerait le fichier à l'intérieur d'un répertoire homonyme au lieu
+    # d'échouer : refuser explicitement plutôt que produire un corpus imbriqué.
+    if [ -d "$target/$f" ] && [ ! -L "$target/$f" ]; then
+      rollback_payload "$target" "$backup" "$done_list"
+      die "un répertoire occupe le chemin $f, cible remise en l'état"
+    fi
+    if [ -e "$target/$f" ]; then
+      mkdir -p "$backup/$(dirname "$f")"
+      cp -p "$target/$f" "$backup/$f"
+    fi
+    if ! mv "$stage/$f" "$target/$f" 2>/dev/null; then
+      rollback_payload "$target" "$backup" "$done_list"
+      die "installation impossible sur $f, cible remise en l'état"
+    fi
+    done_list="$done_list$f"$'\n'
   done <<< "$payload"
   [ -f "$target/$RULES_DIR/agentic-rules.sh" ] && chmod +x "$target/$RULES_DIR/agentic-rules.sh"
   return 0
+}
+
+rollback_payload() {
+  local target="$1" backup="$2" done_list="$3" f
+  [ -n "$done_list" ] || return 0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    if [ -e "$backup/$f" ]; then mv "$backup/$f" "$target/$f"
+    else rm -f "$target/$f"; fi
+  done <<< "$done_list"
 }
 
 write_provenance() {
@@ -138,15 +172,17 @@ cmd_update() {
   stage="$(tmpdir)/stage"
   stage_payload "$src" "$stage"
 
-  # Les fichiers retirés de la charge utile entre deux versions doivent partir.
   local f new old
   new="$(read_manifest "$src")"
   old="$(read_manifest "$target")"
+
+  commit_payload "$src" "$stage" "$target"
+
+  # Les fichiers sortis de la charge utile ne partent qu'une fois la nouvelle
+  # en place : un échec de bascule ne doit rien détruire.
   while IFS= read -r f; do
     printf '%s\n' "$new" | grep -qx "$f" || { rm -f "$target/$f"; info "retiré du corpus : $f"; }
   done <<< "$old"
-
-  commit_payload "$src" "$stage" "$target"
   write_provenance "$src" "$target" "$stage"
   after="$(grep '^commit=' "$target/$PROVENANCE" | cut -d= -f2)"
   if [ "$before" = "$after" ]; then info "corpus déjà à jour sur $after"
@@ -227,7 +263,7 @@ cmd_check() {
       [ -n "$latest" ] && [ "$latest" != "$tag" ] \
         && printf 'AVERTISSEMENT corpus sur %s, dernier tag publié %s\n' "$tag" "$latest"
     else
-      printf 'AVERTISSEMENT source injoignable, contrôle local seul\n'
+      printf 'SOURCE INJOIGNABLE la comparaison demandée n a pas eu lieu\n'; rc=1
     fi
   fi
 

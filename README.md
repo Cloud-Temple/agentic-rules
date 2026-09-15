@@ -75,10 +75,17 @@ configuration qui garde des `TO_FILL`. Retirer une ligne du MANIFEST ou vider
 la provenance de ses empreintes ne fait donc pas passer un dépôt dérivé.
 
 Avec `--remote`, le contrôle compare en plus chaque fichier à la source au tag
-vendoré. C'est la seule vérification qui ne repose pas sur un fichier que le
-dépôt contrôle lui-même, et elle demande un accès sortant. Le retard sur le
-dernier tag publié n'est qu'un avertissement : rester en arrière est un retard,
-pas une dérive.
+vendoré, et échoue si la source est injoignable : une comparaison demandée qui
+n'a pas eu lieu n'est pas un succès. Le retard sur le dernier tag publié reste
+un simple avertissement, rester en arrière est un retard, pas une dérive.
+
+**Limite assumée du contrôle hors ligne.** Les empreintes vivent dans le dépôt
+qu'elles gardent. Qui modifie une règle peut recalculer son empreinte dans le
+même commit, et le contrôle local dira conforme. Deux choses le rattrapent, la
+revue du diff, où les deux modifications sont visibles côte à côte, et le mode
+`--remote`, qui compare à la source et non à la provenance. Un test vérifie
+exactement ce scénario, y compris le fait que le contrôle local le laisse
+passer : autant que ce soit écrit plutôt que découvert.
 
 ## Tests
 
@@ -86,13 +93,19 @@ pas une dérive.
 ./scripts/test/run.sh
 ```
 
-Trente-neuf assertions sur une source git isolée à deux versions taggées et des
+Quarante-neuf assertions sur une source git isolée à deux versions taggées et des
 dépôts consommateurs jetables, sans accès réseau, avec des chemins contenant une
 espace. Elles couvrent l'installation, le refus d'écraser un fichier existant,
 la détection d'un fichier modifié puis supprimé, les trois contournements du
 contrôle, la montée de version avec retrait d'un fichier sorti de la charge
 utile, la préservation de la configuration, le fait qu'un refus laisse la cible
 strictement inchangée, et le nettoyage des temporaires.
+
+Trois scénarios viennent de constats de revue : une mise à jour dont la bascule
+échoue à mi-chemin doit rendre la cible intacte, un MANIFEST portant un chemin
+remontant ne doit rien supprimer hors de la cible, et un répertoire occupant le
+chemin d'un fichier du corpus doit faire échouer l'installation au lieu d'y
+imbriquer le fichier.
 
 Deux assertions gardent des défauts déjà rencontrés : la configuration doit
 rester hors empreinte, sans quoi tout dépôt renseigné serait vu comme dérivé, et
