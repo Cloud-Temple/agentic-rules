@@ -7,10 +7,11 @@
 # Trois états par champ, et un seul sens pour chacun :
 #   une valeur   le champ est renseigné, l'agent l'utilise
 #   disabled     le champ est volontairement inutilisé, l'agent l'ignore
-#   TO_FILL      le champ n'a pas été traité, le contrôle de conformité échoue
+#   le marqueur  le champ n'a pas été traité, le contrôle de conformité échoue
 #
-# Un champ absent est traité comme TO_FILL. Ne jamais supprimer une clé pour
-# faire passer le contrôle.
+# Un champ absent est traité comme non traité. Ne jamais supprimer une clé pour
+# faire passer le contrôle : le contrôle ne lit que les valeurs, pas ces
+# commentaires, mais une clé manquante reste une clé manquante.
 
 schema_version: 1
 

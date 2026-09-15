@@ -27,11 +27,15 @@ lisible dans le starter-kit.
   à l'autre, avec ses trois états, valeur, `disabled` et `TO_FILL`.
 - Les fichiers d'amorçage `AGENTS.md`, `CLAUDE.md` et `QWEN.md`, distribués
   avec le corpus pour qu'un dépôt soit couvert quel que soit l'outil agentique.
-- `scripts/agentic-rules.sh`, installation, mise à jour et contrôle de
-  conformité par empreinte, avec `AGENTIC_RULES/.provenance` nommant le tag,
-  le commit et le hachage de chaque fichier distribué.
-- `scripts/test/run.sh`, vingt-deux assertions hors réseau sur le script.
-- `scripts/check-source.sh`, qui refuse un fichier de règles absent du MANIFEST.
+- `AGENTIC_RULES/agentic-rules.sh`, installation, mise à jour et contrôle de
+  conformité par empreinte, vendoré avec le corpus pour que le contrôle se fasse
+  sans accès sortant. `AGENTIC_RULES/.provenance` nomme le tag, le commit et le
+  hachage de chaque fichier distribué. L'installation prépare tout dans un
+  répertoire d'attente avant bascule et refuse d'écraser un fichier existant.
+- `AGENTIC_RULES/MANIFEST`, la liste de la charge utile, distribuée avec elle.
+- `scripts/test/run.sh`, trente-neuf assertions hors réseau sur le script.
+- `scripts/check-source.sh`, qui refuse un fichier de règles absent du MANIFEST
+  ou un fichier parasite dans `AGENTIC_RULES/`.
 - `templates/workflows/agentic-conformity.yml`, le job de CI à copier dans
   chaque dépôt consommateur.
 

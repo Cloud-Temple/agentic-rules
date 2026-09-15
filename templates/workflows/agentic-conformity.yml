@@ -1,29 +1,26 @@
 # Contrôle de conformité du corpus de règles agentiques.
 #
-# À copier dans .github/workflows/ du dépôt consommateur. Il compare la copie
-# vendorée aux empreintes de AGENTIC_RULES/.provenance et échoue sur toute
-# dérive locale. Le script de contrôle est récupéré au tag inscrit dans la
-# provenance, jamais à une version plus récente : un dépôt reste jugé sur le
-# corpus qu'il a effectivement pris.
+# À copier dans .github/workflows/ du dépôt consommateur. Le vérificateur est
+# vendoré avec le corpus, sous AGENTIC_RULES/ : le contrôle ne demande aucun
+# accès sortant et son empreinte est elle-même couverte par la provenance.
 name: Conformité des règles agentiques
 
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    # Une fois par semaine, comparaison à la source pour repérer un dépôt
+    # resté sur un tag ancien. Séparée du contrôle de PR, qui reste hors ligne.
+    - cron: "0 6 * * 1"
 
 jobs:
   conformite:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Récupérer le script au tag vendoré
-        run: |
-          set -euo pipefail
-          tag="$(grep '^tag=' AGENTIC_RULES/.provenance | cut -d= -f2)"
-          echo "corpus vendoré au tag $tag"
-          curl -fsSL -o /tmp/agentic-rules.sh \
-            "https://raw.githubusercontent.com/Cloud-Temple/agentic-rules/${tag}/scripts/agentic-rules.sh"
-          chmod +x /tmp/agentic-rules.sh
-      - name: Vérifier la conformité
-        run: /tmp/agentic-rules.sh check . --remote
+      - name: Contrôle local
+        run: ./AGENTIC_RULES/agentic-rules.sh check .
+      - name: Comparaison à la source
+        if: github.event_name == 'schedule'
+        run: ./AGENTIC_RULES/agentic-rules.sh check . --remote

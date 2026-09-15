@@ -39,21 +39,23 @@ passer le contrôle, cela le fait échouer autrement.
 ## Installer dans un dépôt
 
 ```bash
-curl -fsSL -o /tmp/agentic-rules.sh \
-  https://raw.githubusercontent.com/Cloud-Temple/agentic-rules/main/scripts/agentic-rules.sh
-chmod +x /tmp/agentic-rules.sh
-/tmp/agentic-rules.sh install /chemin/du/depot --ref v1.0.0
+git clone --depth 1 --branch v1.0.0 https://github.com/Cloud-Temple/agentic-rules.git /tmp/ar
+/tmp/ar/AGENTIC_RULES/agentic-rules.sh install /chemin/du/depot --ref v1.0.0 --source /tmp/ar
 ```
 
-L'installation copie la charge utile, écrit `AGENTIC_RULES/.provenance` avec le
-tag, le commit et l'empreinte de chaque fichier, puis crée la configuration à
-renseigner. Copier ensuite `templates/workflows/agentic-conformity.yml` dans
-`.github/workflows/` du dépôt.
+L'installation prépare la charge utile complète dans un répertoire d'attente
+avant de la basculer : un échec en cours de route ne laisse pas un corpus
+hybride. Elle refuse d'écraser un `AGENTS.md` ou des règles déjà présents, sauf
+`--force`. Elle écrit ensuite `AGENTIC_RULES/.provenance` avec le tag, le commit
+et l'empreinte de chaque fichier, puis crée la configuration à renseigner.
+
+Le vérificateur est vendoré avec le corpus, sous `AGENTIC_RULES/agentic-rules.sh`.
+Copier enfin `templates/workflows/agentic-conformity.yml` dans `.github/workflows/`.
 
 ## Mettre à jour
 
 ```bash
-/tmp/agentic-rules.sh update /chemin/du/depot --ref v1.1.0
+./AGENTIC_RULES/agentic-rules.sh update /chemin/du/depot --ref v1.1.0
 ```
 
 La mise à jour remplace les fichiers du corpus et préserve
@@ -63,13 +65,20 @@ c'est le comportement voulu, un besoin d'évolution passe par une PR sur ce dép
 ## Vérifier
 
 ```bash
-/tmp/agentic-rules.sh check /chemin/du/depot --remote
+./AGENTIC_RULES/agentic-rules.sh check .
 ```
 
-Le contrôle échoue si un fichier du corpus a été modifié ou supprimé, ou si la
-configuration garde des `TO_FILL`. Avec `--remote`, il avertit en plus lorsque
-le dépôt est resté sur un tag antérieur au dernier publié. Cet avertissement ne
-fait pas échouer le job : rester en arrière est un retard, pas une dérive.
+Le contrôle hors ligne échoue dans cinq cas : un fichier du corpus modifié ou
+supprimé, un fichier du MANIFEST sans empreinte, une empreinte orpheline
+laissée par un MANIFEST amputé, un fichier ajouté dans `AGENTIC_RULES/`, ou une
+configuration qui garde des `TO_FILL`. Retirer une ligne du MANIFEST ou vider
+la provenance de ses empreintes ne fait donc pas passer un dépôt dérivé.
+
+Avec `--remote`, le contrôle compare en plus chaque fichier à la source au tag
+vendoré. C'est la seule vérification qui ne repose pas sur un fichier que le
+dépôt contrôle lui-même, et elle demande un accès sortant. Le retard sur le
+dernier tag publié n'est qu'un avertissement : rester en arrière est un retard,
+pas une dérive.
 
 ## Tests
 
@@ -77,11 +86,18 @@ fait pas échouer le job : rester en arrière est un retard, pas une dérive.
 ./scripts/test/run.sh
 ```
 
-Vingt-deux assertions sur une source git isolée et un dépôt consommateur
-jetable, sans accès réseau : installation, refus de double installation,
-détection d'un fichier modifié puis supprimé, réparation par mise à jour,
-préservation de la configuration, et vérification que la configuration reste
-hors empreinte pour qu'un dépôt renseigné ne soit jamais vu comme dérivé.
+Trente-neuf assertions sur une source git isolée à deux versions taggées et des
+dépôts consommateurs jetables, sans accès réseau, avec des chemins contenant une
+espace. Elles couvrent l'installation, le refus d'écraser un fichier existant,
+la détection d'un fichier modifié puis supprimé, les trois contournements du
+contrôle, la montée de version avec retrait d'un fichier sorti de la charge
+utile, la préservation de la configuration, le fait qu'un refus laisse la cible
+strictement inchangée, et le nettoyage des temporaires.
+
+Deux assertions gardent des défauts déjà rencontrés : la configuration doit
+rester hors empreinte, sans quoi tout dépôt renseigné serait vu comme dérivé, et
+un `TO_FILL` cité dans un commentaire ne doit pas faire échouer le contrôle,
+sans quoi un dépôt correctement configuré resterait non conforme à vie.
 
 ## Versionnement
 
