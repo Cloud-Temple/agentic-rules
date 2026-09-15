@@ -1,0 +1,19 @@
+# Valeurs propres au dépôt Cloud-Temple/agentic-rules.
+# Voir project.config.example.yml pour le sens des trois états.
+
+schema_version: 1
+
+project:
+  name: agentic-rules
+  public_language: fr
+
+memory:
+  live:
+    server: my-live-memory
+    space_id: starter-kit
+  graph:
+    server: disabled
+    memory_id: disabled
+
+review:
+  reviewer_provider: codex
