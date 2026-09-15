@@ -1,0 +1,29 @@
+# Contrôle de conformité du corpus de règles agentiques.
+#
+# À copier dans .github/workflows/ du dépôt consommateur. Il compare la copie
+# vendorée aux empreintes de AGENTIC_RULES/.provenance et échoue sur toute
+# dérive locale. Le script de contrôle est récupéré au tag inscrit dans la
+# provenance, jamais à une version plus récente : un dépôt reste jugé sur le
+# corpus qu'il a effectivement pris.
+name: Conformité des règles agentiques
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  conformite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Récupérer le script au tag vendoré
+        run: |
+          set -euo pipefail
+          tag="$(grep '^tag=' AGENTIC_RULES/.provenance | cut -d= -f2)"
+          echo "corpus vendoré au tag $tag"
+          curl -fsSL -o /tmp/agentic-rules.sh \
+            "https://raw.githubusercontent.com/Cloud-Temple/agentic-rules/${tag}/scripts/agentic-rules.sh"
+          chmod +x /tmp/agentic-rules.sh
+      - name: Vérifier la conformité
+        run: /tmp/agentic-rules.sh check . --remote
