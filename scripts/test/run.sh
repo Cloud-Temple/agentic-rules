@@ -18,8 +18,8 @@ check(){ if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 (attendu «$3», obtenu �
 git_c() { git -C "$1" -c user.email=test@local -c user.name=test "${@:2}"; }
 
 # Empreinte complète d'une cible : contenu de chaque fichier et arborescence.
-snapshot() { ( cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort
-                       cd "$1" && find . -mindepth 1 -type d | sort ); }
+snapshot() { ( cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort
+               cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort ); }
 
 # Source git isolée. v0.0.0-test est l'état courant ; v0.0.1-test modifie un
 # fichier du corpus et en retire un autre, pour exercer une vraie montée de
@@ -179,9 +179,12 @@ check "une source injoignable fait échouer --remote" "$rc" "1"
 printf 'MANIFEST hostile\n'
 printf 'a ne pas supprimer\n' > "$WORK/temoin externe.txt"
 printf '../temoin externe.txt\n' >> "$T5/AGENTIC_RULES/MANIFEST"
-"$SCRIPT" update "$T5" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1; rc=$?
+before_snap="$(snapshot "$T5")"
+out="$("$SCRIPT" update "$T5" --ref v0.0.0-test --source "$SRC" 2>&1)"; rc=$?
 check "un chemin remontant fait échouer la mise à jour" "$rc" "1"
+printf '%s' "$out" | grep -q "chemin remontant interdit" && ok "l'échec est bien celui du chemin remontant" || ko "l'échec est bien celui du chemin remontant"
 [ -f "$WORK/temoin externe.txt" ] && ok "le fichier hors cible survit" || ko "le fichier hors cible survit"
+[ "$(snapshot "$T5")" = "$before_snap" ] && ok "la cible reste strictement inchangée" || ko "la cible reste strictement inchangée"
 
 printf 'retour arrière\n'
 T6="$WORK/depot six"; mkdir -p "$T6"
@@ -192,12 +195,25 @@ fill_values "$T6"
 rm "$T6/AGENTIC_RULES/project.config.example.yml"
 mkdir -p "$T6/AGENTIC_RULES/project.config.example.yml/occupe"
 printf 'x\n' > "$T6/AGENTIC_RULES/project.config.example.yml/occupe/x"
+before_snap="$(snapshot "$T6")"
 "$SCRIPT" update "$T6" --ref v0.0.1-test --source "$SRC" >/dev/null 2>&1; rc=$?
 check "une bascule impossible échoue" "$rc" "1"
+[ "$(snapshot "$T6")" = "$before_snap" ] \
+  && ok "la cible est rendue strictement intacte, contenus, types et modes" \
+  || ko "la cible est rendue strictement intacte, contenus, types et modes"
 grep -q "ligne ajoutee en v0.0.1" "$T6/AGENTIC_RULES/REVIEWERS.md" \
-  && ko "les fichiers déjà déplacés sont rendus" || ok "les fichiers déjà déplacés sont rendus"
-[ -f "$T6/QWEN.md" ] && ok "aucun retrait n'a lieu avant une bascule réussie" || ko "aucun retrait n'a lieu avant une bascule réussie"
-grep -q "^tag=v0.0.0-test" "$T6/AGENTIC_RULES/.provenance" && ok "la provenance n'annonce pas la version échouée" || ko "la provenance n'annonce pas la version échouée"
+  && ko "aucun fichier ne porte la version échouée" || ok "aucun fichier ne porte la version échouée"
+
+# Parent impossible : AGENTIC_RULES occupe par un fichier. L echec survient sur
+# le quatrieme fichier de la charge utile, les trois premiers sont deja poses.
+T7="$WORK/depot sept"; mkdir -p "$T7"
+printf 'ce n est pas un repertoire\n' > "$T7/AGENTIC_RULES"
+before_snap="$(snapshot "$T7")"
+out="$("$SCRIPT" install "$T7" --ref v0.0.0-test --source "$SRC" 2>&1)"; rc=$?
+check "un parent impossible fait échouer l'installation" "$rc" "1"
+printf '%s' "$out" | grep -q "répertoire parent impossible" && ok "l'échec est bien celui du parent" || ko "l'échec est bien celui du parent"
+[ -e "$T7/AGENTS.md" ] && ko "les fichiers déjà posés sont retirés" || ok "les fichiers déjà posés sont retirés"
+[ "$(snapshot "$T7")" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
 
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

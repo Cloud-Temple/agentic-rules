@@ -33,7 +33,7 @@ lisible dans le starter-kit.
   hachage de chaque fichier distribué. L'installation prépare tout dans un
   répertoire d'attente avant bascule et refuse d'écraser un fichier existant.
 - `AGENTIC_RULES/MANIFEST`, la liste de la charge utile, distribuée avec elle.
-- `scripts/test/run.sh`, quarante-neuf assertions hors réseau sur le script,
+- `scripts/test/run.sh`, cinquante-quatre assertions hors réseau sur le script,
   dont le retour arrière d'une bascule échouée, le refus d'un MANIFEST portant
   un chemin remontant, et la falsification cohérente que seul `--remote` voit.
 - `scripts/check-source.sh`, qui refuse un fichier de règles absent du MANIFEST

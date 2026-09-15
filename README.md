@@ -93,7 +93,7 @@ passer : autant que ce soit écrit plutôt que découvert.
 ./scripts/test/run.sh
 ```
 
-Quarante-neuf assertions sur une source git isolée à deux versions taggées et des
+Cinquante-quatre assertions sur une source git isolée à deux versions taggées et des
 dépôts consommateurs jetables, sans accès réseau, avec des chemins contenant une
 espace. Elles couvrent l'installation, le refus d'écraser un fichier existant,
 la détection d'un fichier modifié puis supprimé, les trois contournements du

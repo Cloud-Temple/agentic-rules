@@ -82,7 +82,10 @@ commit_payload() {
   payload="$(read_manifest "$src")"
   backup="$(tmpdir)/backup"
   while IFS= read -r f; do
-    mkdir -p "$target/$(dirname "$f")"
+    if ! mkdir -p "$target/$(dirname "$f")" 2>/dev/null; then
+      rollback_payload "$target" "$backup" "$done_list"
+      die "répertoire parent impossible pour $f, cible remise en l'état"
+    fi
     # mv déplacerait le fichier à l'intérieur d'un répertoire homonyme au lieu
     # d'échouer : refuser explicitement plutôt que produire un corpus imbriqué.
     if [ -d "$target/$f" ] && [ ! -L "$target/$f" ]; then
