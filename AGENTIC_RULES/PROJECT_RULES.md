@@ -103,9 +103,9 @@ vérifier les noms réellement exposés par le serveur avant de s'y fier.
   section suivante. L'ambiguïté conduit à l'arrêt, jamais à une interprétation
   par défaut.
 
-Une réponse encourageante ne vaut pas accès. Après toute issue « poursuivre »,
-confirmer l'accès réel en lisant l'espace puis en écrivant la note de cadrage
-prévue plus haut et en la relisant, avant de tenir le démarrage pour acquis.
+Une réponse encourageante ne vaut pas accès. Une issue « poursuivre » reprend le
+démarrage à son étape 1 ; c'est la lecture, puis la note de cadrage écrite et
+relue, qui établissent l'accès, pas le retour de la création.
 
 Cette création ne porte que sur l'espace configuré, et s'arrête après cette
 seconde tentative. Aucun réessai en boucle.
