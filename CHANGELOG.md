@@ -3,6 +3,32 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.3.0] - 2026-09-16
+
+### Modifié
+
+- `PROJECT_RULES.md` : nouvelle section « Trouver l'espace du projet ».
+  L'espace est cherché sur tous les serveurs Live Memory de la session, pas
+  seulement sur celui que `memory.live.server` déclare. Trouvé sur plusieurs,
+  l'utilisateur choisit ; sur un seul, l'agent le retient sans demander ; sur
+  aucun, la création bornée existante s'applique. Le serveur retenu devient le
+  serveur effectif que cible toute la session, et l'agent corrige
+  `memory.live.server` s'il diffère.
+- `PROJECT_RULES.md` : les renvois au serveur déclaré visent désormais le serveur
+  effectif, dans la table des espaces, le ciblage des appels, l'étape 1 du
+  démarrage et la section « Mémoire absente ou en panne ».
+- `project.config.example.yml` : le commentaire de `memory.live.server` dit ce
+  que la clé désigne réellement, la cible de création et non le seul serveur
+  consulté.
+
+### Pourquoi
+
+Un dépôt peut déclarer un espace qui vit sur l'autre serveur. La règle
+précédente interdisait de regarder ailleurs, puis prescrivait la création : elle
+produisait un doublon vide pendant que la mémoire réelle restait sur le serveur
+non consulté, sans qu'aucune erreur ne le signale. Le cas est réel dans la
+flotte.
+
 ## [1.2.0] - 2026-09-16
 
 ### Ajouté

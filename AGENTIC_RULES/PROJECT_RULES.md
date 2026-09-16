@@ -11,12 +11,13 @@ Les identifiants ne sont pas écrits dans ces règles. Ils sont lus dans
 valeur de cette clé dans ce fichier ; ne jamais appeler un service avec la
 notation littérale, une valeur vide, un `TO_FILL` ou un identifiant deviné.
 La copie de ces règles ne configure aucun serveur MCP et ne crée aucun espace.
-La création éventuelle de l'espace configuré a lieu au démarrage d'une session,
-selon « Espace mémoire absent ».
+Le serveur qui héberge réellement l'espace est déterminé au démarrage, selon
+« Trouver l'espace du projet ». La création éventuelle de l'espace a lieu à ce
+moment, selon « Espace mémoire absent ».
 
 | Usage | Serveur MCP | Identifiant |
 | --- | --- | --- |
-| Mémoire de travail | `<memory.live.server>` | `space_id="<memory.live.space_id>"` |
+| Mémoire de travail | serveur effectif, voir ci-dessous | `space_id="<memory.live.space_id>"` |
 | Index sémantique durable | `<memory.graph.server>` | `memory_id="<memory.graph.memory_id>"` |
 
 Utiliser ces espaces et leur casse exacte. Ne jamais substituer un espace
@@ -27,8 +28,8 @@ ni secrets, ni données personnelles de clients, ni extraits sensibles de
 production ; conserver seulement le contexte utile et des références autorisées.
 
 Pour les appels `space_*`, `bank_*` et `live_*`, cibler explicitement le serveur
-`<memory.live.server>`.
-Ne pas sélectionner un outil homonyme sur un autre serveur. Vérifier les noms
+effectif retenu par « Trouver l'espace du projet ». Une fois ce serveur retenu,
+ne pas sélectionner un outil homonyme sur un autre serveur. Vérifier les noms
 et paramètres dans le schéma réellement exposé par le serveur choisi avant
 le premier appel. Les notations ci-dessous décrivent ses arguments, pas des
 commandes shell. Si `bank_list` n'est pas disponible, utiliser `bank_read_all`
@@ -44,11 +45,41 @@ Ne pas retirer cette section des règles : leur contenu est identique dans tous
 les dépôts, la variation passe par la configuration. Live Memory et son
 protocole restent obligatoires dans tous les cas.
 
+## Trouver l'espace du projet
+
+`memory.live.space_id` nomme l'espace, pas le serveur qui l'héberge. Plusieurs
+serveurs Live Memory peuvent être configurés dans une session, et un même
+identifiant peut vivre sur plusieurs d'entre eux avec des contenus différents.
+Résoudre le serveur effectif avant tout le reste :
+
+1. Chercher l'identifiant **exact** de `memory.live.space_id` sur chaque serveur
+   Live Memory exposé dans la session, `<memory.live.server>` compris. Ne pas
+   dériver l'identifiant ni en essayer une variante, et ne pas s'arrêter au
+   premier serveur qui répond.
+2. Trouvé sur plusieurs serveurs : **demander à l'utilisateur lequel retenir**,
+   et attendre sa réponse. Deux espaces homonymes portent deux mémoires
+   distinctes ; en choisir un revient à ignorer l'autre, et ce choix n'appartient
+   pas à l'agent.
+3. Trouvé sur un seul serveur : le retenir sans rien demander, même si ce n'est
+   pas celui que `memory.live.server` déclare.
+4. Trouvé sur aucun : appliquer « Espace mémoire absent ». La création a lieu sur
+   `<memory.live.server>`.
+
+Le serveur retenu est le serveur effectif ; toute la suite de la session le
+cible, lui et pas un autre. Dire lequel a été retenu, dans tous les cas.
+
+Une fois l'espace accessible, comparer le serveur effectif à
+`memory.live.server`. S'ils diffèrent, corriger cette clé dans
+`project.config.yml`, qui est le seul fichier de `AGENTIC_RULES/` qu'un dépôt a
+le droit de modifier. Une configuration qui se trompe sur l'emplacement de la
+mémoire ferait retomber chaque session suivante dans la même recherche.
+
 ## Au démarrage
 
-1. Vérifier que le serveur Live Memory configuré est disponible et que les droits
-   sur l'espace prévu couvrent la lecture et l'écriture de notes. Ne pas confondre
-   présence d'un outil et accès réel à cet espace.
+1. Résoudre le serveur effectif selon « Trouver l'espace du projet », puis
+   vérifier qu'il est disponible et que les droits sur l'espace couvrent la
+   lecture et l'écriture de notes. Ne pas confondre présence d'un outil et accès
+   réel à cet espace.
 2. Lire `space_rules(space_id="<memory.live.space_id>")` une fois pour connaître la structure.
 3. Charger le contexte courant et les décisions utiles. Utiliser `bank_read_all`
    si la banque est compacte ; sinon `bank_list` puis `bank_read` sur le contexte
@@ -61,15 +92,16 @@ protocole restent obligatoires dans tous les cas.
 Lors de l'installation, vérifier l'écriture avec une première note utile de
 cadrage du projet, puis la relire. Une banque initialement vide est acceptable
 si l'espace est accessible et si ce contexte initial est enregistré. Un espace
-qui n'existe pas encore relève de la section « Espace mémoire absent ».
+introuvable sur tous les serveurs relève de la section « Espace mémoire absent ».
 Ne pas créer de notes de test à chaque session ; réutiliser une preuve d'accès
 valide et tenir compte immédiatement de toute erreur ultérieure.
 
 ## Espace mémoire absent
 
-Un dépôt fraîchement mis en conformité déclare un `memory.live.space_id` qui
-n'existe pas encore sur le serveur. Ce cas n'est pas une panne, et il ne doit
-pas arrêter le travail.
+Cette section s'applique quand la recherche de « Trouver l'espace du projet »
+n'a rien trouvé sur aucun serveur. Un dépôt fraîchement mis en conformité
+déclare un `memory.live.space_id` qui n'existe encore nulle part. Ce cas n'est
+pas une panne, et il ne doit pas arrêter le travail.
 
 Le serveur ne distingue pas un espace absent d'un espace existant hors des
 droits du jeton : les deux rendent le même refus d'accès. C'est la tentative de
@@ -123,9 +155,10 @@ vérifier la connectivité et les accès au service déclaré, corriger sa confi
 d'accès si demandé, puis vérifier une écriture utile et sa relecture. Aucune
 édition de code métier, opération Git/GitHub ou action de livraison ne relève
 de cette exception. Un refus d'accès n'est pas la preuve d'un espace inexistant :
-la seule action admise pour trancher est la tentative de création bornée décrite
-en « Espace mémoire absent ». Ne pas changer d'espace, élargir les droits ni
-réessayer en boucle. Si une intervention externe est nécessaire, l'indiquer.
+les seules actions admises pour trancher sont la recherche sur les autres
+serveurs décrite en « Trouver l'espace du projet », puis la tentative de création
+bornée décrite en « Espace mémoire absent ». Ne pas changer d'espace, élargir les
+droits ni réessayer en boucle. Si une intervention externe est nécessaire, l'indiquer.
 
 Après rétablissement, recharger le contexte et les notes utiles avant de
 reprendre. Après un timeout d'écriture, vérifier si la note existe déjà avant
