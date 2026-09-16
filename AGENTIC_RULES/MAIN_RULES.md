@@ -53,9 +53,13 @@ qu'aucun `..` n'apparaisse dans la valeur. Refuser d'abord, lire ensuite : un
 chemin qui sort du dépôt ferait lire un secret ou des instructions étrangères
 sous l'apparence des règles du projet.
 
+Vérifier avant d'ouvrir, avec un outil de résolution de chemin tel que
+`readlink -f` ou `realpath`, et comparer le résultat à la racine du dépôt. Sans
+un tel outil, le pointeur n'est pas vérifiable : ne pas l'ouvrir.
+
 Le contrôle de conformité fait la même vérification, mais il tourne en
-intégration continue, pas au moment où l'agent lit. Il constate après coup ; il
-ne protège pas la lecture.
+intégration continue quand le dépôt l'a mise en place, pas au moment où l'agent
+lit. Il constate après coup ; il ne protège pas la lecture.
 
 Si le champ porte un chemin et que le fichier est absent, ou refusé pour l'une
 des raisons ci-dessus, c'est un défaut de configuration : le signaler et

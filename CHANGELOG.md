@@ -31,61 +31,21 @@ versionnement sémantique.
 
 ### Pourquoi un pointeur plutôt qu'un fichier réservé
 
-La première piste était un `AGENTIC_RULES/PROJECT_NOTES.md` hors charge utile.
-Elle demandait une deuxième exception dans le répertoire dont la promesse entière
-est « identique à l'octet près partout », obligeait chaque dépôt à déplacer son
-savoir dans un fichier neuf, et produisait un fichier qui ressemble à du corpus
-sans en être. Le pointeur réutilise le seul canal de variation qui existe déjà,
-et laisse chaque document là où le projet le range.
+Un fichier réservé dans `AGENTIC_RULES/` aurait demandé une seconde exception
+dans le répertoire dont la promesse est d'être identique partout, et obligé
+chaque dépôt à déplacer son savoir. Le pointeur réutilise le seul canal de
+variation existant et laisse chaque document là où le projet le range.
 
-### Ce que la revue a corrigé
+### Confinement
 
-La première rédaction filtrait le chemin sur sa seule forme : `/*` pour
-l'absolu, `*..*` pour la remontée. Deux défauts, tous deux reproduits.
+Le chemin désigne un fichier du dépôt. Un chemin absolu, une remontée hors de la
+racine, ou un lien symbolique dont la cible sort du dépôt sont refusés. Cette
+règle vaut des deux côtés : le contrôle de conformité la vérifie, et
+`MAIN_RULES.md` la donne à l'agent, qui n'exécute jamais ce contrôle. Un
+pointeur non vérifiable ne s'ouvre pas.
 
-Un lien symbolique au nom anodin sort du dépôt sans contenir un seul `..`, et
-le contrôle rendait `conforme` : l'agent lisait un fichier arbitraire du poste
-en croyant lire les instructions du projet. Le contrôle résout maintenant le
-chemin réel, liens compris, et vérifie qu'il reste sous la racine.
-
-À l'inverse, `*..*` refusait un nom de fichier légitime comme
-`RELEASE-1.0..1.md`. Le motif n'encadre plus que le segment `..`, comme le fait
-déjà `read_manifest` dans le même script.
-
-Une seconde passe a trouvé que le message d'échec mentait sur ce qu'il avait
-rencontré : un répertoire ou un lien cassé étaient annoncés comme « n'existe
-pas ». Le verdict était bon, le diagnostic faux. Trois messages distincts
-maintenant. Elle a aussi trouvé qu'un échec de `readlink` n'était exercé par
-aucun test, et qu'une clé dupliquée dans une même section retenait la première
-valeur là où tout lecteur YAML garde la dernière. Les deux sont corrigés et
-couverts.
-
-Une troisième passe a trouvé le plus important. Tous ces contrôles vivent dans
-`agentic-rules.sh`, que la CI exécute et que l'agent n'exécute jamais. Le texte
-des règles, lui, disait de lire le document désigné sans dire de refuser un
-chemin dangereux. La protection ne valait donc qu'après coup, et pas du tout
-sur une configuration modifiée localement. `MAIN_RULES.md` porte maintenant la
-règle côté agent : ne pas ouvrir le document si le chemin est absolu, remonte
-hors de la racine, ou y mène une fois les liens résolus.
-
-La même passe a montré qu'un de mes tests était complaisant. Le leurre de clé
-homonyme était placé avant la vraie section, si bien qu'une lecture aveugle à la
-section retombait sur la bonne valeur par coïncidence. Il y a maintenant un
-leurre de chaque côté.
-
-Et `resolve_path` rendait un succès quand son plafond était atteint, donc un
-chemin à demi résolu, qui peut se trouver dans le dépôt alors que la cible réelle
-est dehors. Elle rend un échec. Ce plafond et cet échec restent sans test, et le
-code le dit : le seul appelant vérifie `-f` avant d'appeler, or le noyau rend
-déjà ELOOP au-delà de sa propre limite. Forcer cet état serait du théâtre.
-
-### Ce que le pointeur ne doit pas devenir
-
-Le document désigné décrit le projet, jamais la méthode. Il ne définit ni règle
-mémoire, ni workflow Git, ni politique de revue, ni point d'autorisation humaine.
-En cas de contradiction avec le corpus, le corpus l'emporte et l'agent signale le
-conflit. Un seul fichier, pas un répertoire, pour qu'il ne devienne pas l'index
-d'un second corpus local.
+Le détail des quatre passes de revue qui ont mené à cette forme est dans la
+PR #7, pas ici.
 
 ## [1.1.0] - 2026-09-16
 
