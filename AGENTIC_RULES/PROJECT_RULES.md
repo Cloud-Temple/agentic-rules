@@ -50,29 +50,53 @@ protocole restent obligatoires dans tous les cas.
 `memory.live.space_id` nomme l'espace, pas le serveur qui l'héberge. Plusieurs
 serveurs Live Memory peuvent être configurés dans une session, et un même
 identifiant peut vivre sur plusieurs d'entre eux avec des contenus différents.
-Résoudre le serveur effectif avant tout le reste :
+Résoudre le serveur effectif avant tout le reste.
 
-1. Chercher l'identifiant **exact** de `memory.live.space_id` sur chaque serveur
-   Live Memory exposé dans la session, `<memory.live.server>` compris. Ne pas
-   dériver l'identifiant ni en essayer une variante, et ne pas s'arrêter au
-   premier serveur qui répond.
-2. Trouvé sur plusieurs serveurs : **demander à l'utilisateur lequel retenir**,
+Chercher l'identifiant **exact** de `memory.live.space_id` sur chaque serveur
+Live Memory exposé dans la session, `<memory.live.server>` compris, avec
+l'inspection d'espace que le serveur expose : `space_list` quand il énumère les
+espaces accessibles, sinon `space_info` sur l'identifiant. Vérifier ces noms dans
+le schéma réellement exposé, comme pour `bank_list`. Ne pas dériver l'identifiant
+ni en essayer une variante, et ne pas s'arrêter au premier serveur qui répond.
+
+Un serveur qui oppose un **refus d'accès** ne répond pas « absent » : il ne
+distingue pas un espace inexistant d'un espace hors des droits du jeton. Ne pas
+le compter comme « pas trouvé ». Le signaler, et tant qu'un refus n'est pas
+élucidé, ne rien créer : appliquer « Mémoire absente ou en panne ». Créer après
+un refus produirait le doublon vide que cette section existe pour éviter.
+
+Selon ce que la recherche établit :
+
+1. Trouvé sur plusieurs serveurs : **demander à l'utilisateur lequel retenir**,
    et attendre sa réponse. Deux espaces homonymes portent deux mémoires
    distinctes ; en choisir un revient à ignorer l'autre, et ce choix n'appartient
    pas à l'agent.
-3. Trouvé sur un seul serveur : le retenir sans rien demander, même si ce n'est
-   pas celui que `memory.live.server` déclare.
-4. Trouvé sur aucun : appliquer « Espace mémoire absent ». La création a lieu sur
+2. Trouvé sur un seul serveur : le retenir sans rien demander, même si ce n'est
+   pas celui que `memory.live.server` déclare. Un identifiant peut coïncider avec
+   l'espace d'un autre projet : lire sa description et son propriétaire, et les
+   dire. C'est une vérification, pas une question ; elle n'arrête pas le
+   démarrage, elle le rend auditable.
+3. Trouvé sur aucun serveur, sans refus d'accès en suspens : appliquer
+   « Espace mémoire absent ». La création a lieu sur
    `<memory.live.server>`.
 
 Le serveur retenu est le serveur effectif ; toute la suite de la session le
 cible, lui et pas un autre. Dire lequel a été retenu, dans tous les cas.
 
 Une fois l'espace accessible, comparer le serveur effectif à
-`memory.live.server`. S'ils diffèrent, corriger cette clé dans
+`memory.live.server`. S'ils diffèrent, le dire, et corriger cette clé dans
 `project.config.yml`, qui est le seul fichier de `AGENTIC_RULES/` qu'un dépôt a
 le droit de modifier. Une configuration qui se trompe sur l'emplacement de la
 mémoire ferait retomber chaque session suivante dans la même recherche.
+
+Cette correction change le serveur que cibleront les sessions suivantes : c'est
+un changement de configuration qui modifie l'exécution, au sens de
+`WORKFLOW_ENGINEERING.md`, et non une retouche éditoriale. Elle suit le workflow
+Git ordinaire, branche et PR comprises, jamais un commit direct sur une branche
+partagée. La porter dans la branche de la tâche en cours si elle existe, sinon
+ouvrir une PR dédiée d'une ligne. Tant qu'elle n'est pas fusionnée, la recherche
+se refait à chaque session ; c'est le prix de la traçabilité, pas un défaut à
+contourner.
 
 ## Au démarrage
 
@@ -151,7 +175,8 @@ en cours de session. Ne pas continuer sur le seul chat, cache ou dépôt local.
 
 Pendant ce blocage, les seules actions permises dans le mandat sont :
 lire les consignes et paramètres d'accès mémoire sans exposer les secrets,
-vérifier la connectivité et les accès au service déclaré, corriger sa configuration
+vérifier la connectivité et les accès aux serveurs Live Memory concernés par la
+recherche, corriger sa configuration
 d'accès si demandé, puis vérifier une écriture utile et sa relecture. Aucune
 édition de code métier, opération Git/GitHub ou action de livraison ne relève
 de cette exception. Un refus d'accès n'est pas la preuve d'un espace inexistant :

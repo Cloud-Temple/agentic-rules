@@ -127,6 +127,16 @@ la PR, la branche cible et la révision examinée. Un GO déjà donné reste val
 pour ce même objet ; un changement du contenu ou de la cible impose de le
 renouveler. Ne pas activer d'auto-merge sans ce GO.
 
+Autoriser une action et désigner son objet sont deux choses différentes. Le
+merge reste le seul point d'**autorisation**. Une **désignation** revient à
+l'utilisateur dans un seul cas, nommé ici et nulle part ailleurs : quand
+`memory.live.space_id` correspond à un espace sur plusieurs serveurs Live Memory,
+le choix de l'espace lui appartient, et l'agent attend sa réponse. Ce cas échappe
+au principe « continuer le travail indépendant de la réponse » pour une raison
+précise : deux espaces homonymes portent deux mémoires distinctes, et aucun
+travail n'est indépendant de celle qui sera chargée. Voir « Trouver l'espace du
+projet » dans `PROJECT_RULES.md`.
+
 Dans le périmètre de la tâche, avancer sans confirmations supplémentaires pour
 les modifications locales, commits, pushs, issues, PR, revues, mises à jour du
 Project et opérations mémoire. Les releases, déploiements et opérations

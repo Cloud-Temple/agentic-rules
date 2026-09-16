@@ -17,6 +17,17 @@ versionnement sémantique.
 - `PROJECT_RULES.md` : les renvois au serveur déclaré visent désormais le serveur
   effectif, dans la table des espaces, le ciblage des appels, l'étape 1 du
   démarrage et la section « Mémoire absente ou en panne ».
+- `MAIN_RULES.md` : la section d'autonomie distingue autoriser une action et
+  désigner son objet. Le merge reste le seul point d'autorisation humaine. Le
+  choix entre deux espaces homonymes est une désignation, nommée comme seule
+  exception au principe « continuer le travail indépendant de la réponse »,
+  parce qu'aucun travail n'est indépendant de la mémoire qui sera chargée.
+- `PROJECT_RULES.md` : un refus d'accès rencontré pendant la recherche n'est pas
+  une absence. Tant qu'il n'est pas élucidé, ne rien créer. Sans cette clause,
+  un serveur qui refuse au lieu de répondre « absent » ramenait le doublon vide.
+- `PROJECT_RULES.md` : la correction de `memory.live.server` est un changement de
+  configuration qui modifie l'exécution ; elle passe par une branche et une PR,
+  jamais par un commit direct.
 - `project.config.example.yml` : le commentaire de `memory.live.server` dit ce
   que la clé désigne réellement, la cible de création et non le seul serveur
   consulté.
