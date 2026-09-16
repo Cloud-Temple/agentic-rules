@@ -162,6 +162,46 @@ out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
 check "un chemin absolu échoue" "$rc" "1"
 printf '%s' "$out" | grep -q "CHEMIN ABSOLU" && ok "le chemin absolu est nommé" || ko "le chemin absolu est nommé"
 
+# Un filtre sur la chaîne ne dit rien de la destination. Un lien symbolique au
+# nom anodin sort du dépôt sans contenir un seul `..` : c'est la forme
+# réaliste de la fuite, celle qu'un relecteur humain ne voit pas dans un diff.
+printf 'contenu hors depot par lien\n' > "$WORK/cible-du-lien.md"
+ln -s "$WORK/cible-du-lien.md" "$T/DESIGN/lien.md"
+set_config "$T" instructions_file "DESIGN/lien.md"
+[ -f "$T/DESIGN/lien.md" ] && ok "le lien est vu comme un fichier existant" || ko "le lien est vu comme un fichier existant"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un lien symbolique vers l'extérieur échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "HORS DEPOT" && ok "la sortie du dépôt est nommée" || ko "la sortie du dépôt est nommée"
+printf '%s' "$out" | grep -q "cible-du-lien.md" && ok "la destination réelle est citée" || ko "la destination réelle est citée"
+
+# Un lien qui reste dans le dépôt est légitime et ne doit pas être refusé.
+rm "$T/DESIGN/lien.md"
+ln -s "INSTRUCTIONS.md" "$T/DESIGN/lien.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un lien symbolique interne reste conforme" "$rc" "0"
+rm "$T/DESIGN/lien.md"
+
+# Deux points dans un nom de fichier ne sont pas une remontée de chemin.
+printf 'notes de version\n' > "$T/DESIGN/RELEASE-1.0..1.md"
+set_config "$T" instructions_file "DESIGN/RELEASE-1.0..1.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un nom de fichier contenant deux points reste conforme" "$rc" "0"
+set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# La lecture doit tenir compte de la section. Le schéma réutilise déjà `server`
+# sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
+# la valeur de la mauvaise section, en silence. Un leurre placé AVANT la section
+# project le démontre : une lecture aveugle prendrait son chemin, qui est mort.
+cp "$T/AGENTIC_RULES/project.config.yml" "$WORK/cfg.bak"
+printf 'leurre:\n  instructions_file: DESIGN/N-EXISTE-PAS.md\n\n%s' \
+  "$(cat "$T/AGENTIC_RULES/project.config.yml")" > "$WORK/cfg.tmp"
+mv "$WORK/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
+grep -c 'instructions_file' "$T/AGENTIC_RULES/project.config.yml" | grep -qx 2 \
+  && ok "le leurre et la vraie clé coexistent" || ko "le leurre et la vraie clé coexistent"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "une clé homonyme hors section est ignorée" "$rc" "0"
+cp "$WORK/cfg.bak" "$T/AGENTIC_RULES/project.config.yml"
+
 # Une configuration en schéma 1 n'a pas la clé. Son absence ne bloque rien,
 # sinon la montée de version casserait les dépôts déjà installés.
 grep -v '^  instructions_file:' "$T/AGENTIC_RULES/project.config.yml" > "$T/AGENTIC_RULES/cfg.tmp"

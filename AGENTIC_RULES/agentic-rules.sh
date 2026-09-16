@@ -140,14 +140,48 @@ config_values() {
   sed -e 's/[[:space:]]#.*$//' -e 's/^[[:space:]]*#.*$//' "$1" | grep -v '^[[:space:]]*$'
 }
 
-# Valeur d'une clé de la configuration, sans dépendance à un analyseur YAML.
-# Rend une chaîne vide si la clé est absente : une configuration en schéma 1
-# n'a pas les clés ajoutées depuis.
+# Valeur d'une clé de la configuration, désignée par son chemin complet, par
+# exemple project.instructions_file. Le chemin est obligatoire : le schéma
+# réutilise des noms terminaux d'une section à l'autre, ainsi `server` sous
+# memory.live et sous memory.graph, et chercher le seul nom terminal rendrait
+# la valeur de la mauvaise section. Rend une chaîne vide si la clé est absente.
 config_value() {
-  config_values "$1" \
-    | sed -n "s/^[[:space:]]*$2:[[:space:]]*//p" \
-    | head -1 \
+  config_values "$1" | awk -v want="$2" '
+    {
+      line = $0
+      sub(/^[[:space:]]*-.*$/, "", line)
+      if (line ~ /^[[:space:]]*$/) next
+      if (line !~ /:/) next
+      match(line, /^[[:space:]]*/); ind = RLENGTH
+      key = line; sub(/^[[:space:]]*/, "", key)
+      val = key
+      sub(/^[^:]*:[[:space:]]*/, "", val)
+      sub(/:.*$/, "", key)
+      while (n > 0 && depth[n] >= ind) n--
+      n++; depth[n] = ind; name[n] = key
+      path = name[1]
+      for (i = 2; i <= n; i++) path = path "." name[i]
+      if (path == want) { print val; exit }
+    }' \
     | sed -e 's/^["'"'"']//' -e 's/["'"'"']$//' -e 's/[[:space:]]*$//'
+}
+
+# Chemin réel d'un fichier, liens symboliques résolus, sans dépendre de
+# `readlink -f` qui n'existe pas partout. Rend un échec si le répertoire
+# conteneur n'existe pas.
+resolve_path() {
+  local p="$1" t d b n=0
+  while [ -L "$p" ] && [ "$n" -lt 40 ]; do
+    t="$(readlink "$p")" || return 1
+    case "$t" in
+      /*) p="$t" ;;
+      *) p="$(dirname "$p")/$t" ;;
+    esac
+    n=$((n + 1))
+  done
+  d="$(dirname "$p")"; b="$(basename "$p")"
+  d="$(cd "$d" 2>/dev/null && pwd -P)" || return 1
+  printf '%s/%s\n' "$d" "$b"
 }
 
 cmd_install() {
@@ -255,14 +289,34 @@ cmd_check() {
     # Un pointeur vers un document propre au dépôt ne se vérifie pas tout seul :
     # sans ce contrôle, un chemin devenu faux reste invisible jusqu'à ce qu'un
     # agent cherche le fichier et ne le trouve pas.
-    local notes
-    notes="$(config_value "$target/$CONFIG" instructions_file)"
+    local notes root real
+    notes="$(config_value "$target/$CONFIG" project.instructions_file)"
     case "$notes" in
       ""|disabled|"$UNSET_MARKER") ;;
       /*) printf 'CHEMIN ABSOLU instructions_file doit être relatif à la racine : %s\n' "$notes"; rc=1 ;;
-      *..*) printf 'CHEMIN SORTANT instructions_file remonte hors du dépôt : %s\n' "$notes"; rc=1 ;;
-      *) [ -f "$target/$notes" ] \
-           || { printf 'POINTEUR MORT instructions_file désigne %s, qui n existe pas\n' "$notes"; rc=1; } ;;
+      *)
+        # Le motif n'encadre que le segment `..`, pour ne pas refuser un nom de
+        # fichier qui contient légitimement deux points.
+        case "/$notes/" in
+          */../*) printf 'CHEMIN SORTANT instructions_file remonte hors du dépôt : %s\n' "$notes"; rc=1 ;;
+          *)
+            if [ ! -f "$target/$notes" ]; then
+              printf 'POINTEUR MORT instructions_file désigne %s, qui n existe pas\n' "$notes"; rc=1
+            else
+              # Le filtre sur la chaîne ne dit rien de la destination réelle :
+              # un lien symbolique au nom anodin sort du dépôt sans contenir
+              # un seul `..`. Seule la résolution le voit.
+              root="$(cd "$target" && pwd -P)"
+              if real="$(resolve_path "$target/$notes")"; then
+                case "$real" in
+                  "$root"/*) ;;
+                  *) printf 'HORS DEPOT instructions_file désigne %s, qui mène à %s\n' "$notes" "$real"; rc=1 ;;
+                esac
+              else
+                printf 'CHEMIN IRRESOLU instructions_file désigne %s\n' "$notes"; rc=1
+              fi
+            fi ;;
+        esac ;;
     esac
   else
     printf 'MANQUANT   %s\n' "$CONFIG"; rc=1

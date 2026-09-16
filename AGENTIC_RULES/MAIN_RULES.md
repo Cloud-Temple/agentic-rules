@@ -19,9 +19,16 @@ Les valeurs propres au dépôt ne figurent jamais dans ces règles. L'agent les 
 dans `AGENTIC_RULES/project.config.yml`, seul fichier de ce répertoire qui varie
 d'un projet à l'autre. Un champ vaut une valeur, `disabled` s'il est volontairement
 inutilisé, ou `TO_FILL` s'il n'a pas encore été traité. Un `TO_FILL` sur un champ
-nécessaire à la tâche courante est un blocage, pas une valeur par défaut. Une
-configuration qui déclare `schema_version: 1` ne connaît pas les champs ajoutés
-depuis ; leur absence y vaut `disabled` et ne bloque rien.
+nécessaire à la tâche courante est un blocage, pas une valeur par défaut.
+
+`schema_version` dit à quelle génération du schéma la configuration a été
+écrite. Un champ que cette génération connaissait mais qui a disparu du fichier
+est un champ non traité, et il bloque comme un `TO_FILL` : on ne supprime pas
+une clé pour faire passer un contrôle. Un champ introduit par une génération
+postérieure est simplement absent ; l'agent le traite comme `disabled` et ne
+bloque pas. C'est ce qui permet d'enrichir le schéma sans rendre non conformes
+les dépôts déjà installés. Le contrôle de conformité ne vérifie pas cette
+distinction : elle relève de la lecture, pas de l'outil.
 
 ## Instructions propres au dépôt
 

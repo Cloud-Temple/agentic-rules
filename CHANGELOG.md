@@ -19,10 +19,15 @@ versionnement sémantique.
 
 ### Modifié
 
-- Le schéma de configuration passe en version 2. Une configuration qui déclare
-  `schema_version: 1` ne connaît pas les champs ajoutés depuis : leur absence y
-  vaut `disabled` et ne bloque rien. Les dépôts déjà installés restent conformes
-  sans modification.
+- Le schéma de configuration passe en version 2, et `MAIN_RULES.md` dit
+  enfin à quoi sert ce numéro. Un champ que la génération déclarée connaissait
+  mais qui a disparu du fichier reste un champ non traité, donc bloquant. Un
+  champ introduit plus tard est simplement absent et vaut `disabled`. Les huit
+  dépôts déjà installés restent donc conformes sans être touchés.
+- `config_value` lit une clé par son chemin complet, `project.instructions_file`
+  et non `instructions_file`. Le schéma réutilise `server` sous `memory.live` et
+  sous `memory.graph` : une lecture par nom terminal rendait la valeur de la
+  mauvaise section, en silence.
 
 ### Pourquoi un pointeur plutôt qu'un fichier réservé
 
@@ -32,6 +37,20 @@ est « identique à l'octet près partout », obligeait chaque dépôt à dépla
 savoir dans un fichier neuf, et produisait un fichier qui ressemble à du corpus
 sans en être. Le pointeur réutilise le seul canal de variation qui existe déjà,
 et laisse chaque document là où le projet le range.
+
+### Ce que la revue a corrigé
+
+La première rédaction filtrait le chemin sur sa seule forme : `/*` pour
+l'absolu, `*..*` pour la remontée. Deux défauts, tous deux reproduits.
+
+Un lien symbolique au nom anodin sort du dépôt sans contenir un seul `..`, et
+le contrôle rendait `conforme` : l'agent lisait un fichier arbitraire du poste
+en croyant lire les instructions du projet. Le contrôle résout maintenant le
+chemin réel, liens compris, et vérifie qu'il reste sous la racine.
+
+À l'inverse, `*..*` refusait un nom de fichier légitime comme
+`RELEASE-1.0..1.md`. Le motif n'encadre plus que le segment `..`, comme le fait
+déjà `read_manifest` dans le même script.
 
 ### Ce que le pointeur ne doit pas devenir
 
