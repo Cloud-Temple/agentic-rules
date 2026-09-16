@@ -84,21 +84,28 @@ création, et une structure improvisée resterait définitive.
 
 Lire ensuite la réponse en entier, pas seulement son statut. Un espace existant
 n'est pas forcément celui d'un tiers : le serveur répare l'accès du jeton qui
-l'a créé, et l'annonce dans des champs distincts du statut. Sur Live Memory ces
+l'a créé, et l'annonce dans un champ distinct du statut. Sur Live Memory ces
 champs sont aujourd'hui `creator_access_repair` et `creator_access_pending` ;
 vérifier les noms réellement exposés par le serveur avant de s'y fier.
 
-- Création réussie, sans réserve sur l'accès : poursuivre le démarrage normal,
-  en écrivant la note de cadrage prévue plus haut et en la relisant.
-- « Existe déjà » avec une réparation d'accès annoncée : l'espace est bien celui
-  de ce jeton et son droit vient d'être rétabli. Poursuivre de même.
-- « Existe déjà » sans réparation d'accès : l'espace appartient à un autre jeton.
-  **Arrêter** et demander l'ouverture de l'accès. Ne pas contourner en créant
-  une variante de l'identifiant.
 - Accès créateur annoncé comme non assuré : l'espace existe mais le droit n'est
   pas encore écrit. Le serveur demande alors de rejouer exactement le même
   appel ; le faire **une fois**. Si la réserve persiste, arrêter et signaler.
-- Tout autre échec : appliquer la section suivante.
+- « Existe déjà » sans réparation d'accès annoncée : l'espace appartient à un
+  autre jeton. **Arrêter** et demander l'ouverture de l'accès. Ne pas contourner
+  en créant une variante de l'identifiant.
+- Création réussie, ou « existe déjà » avec réparation d'accès annoncée :
+  l'espace est utilisable par ce jeton. Poursuivre le démarrage normal.
+- Le serveur réclame des `rules` faute de modèle par défaut : c'est un défaut de
+  configuration du serveur, pas un espace manquant. **Arrêter** et le signaler.
+  Ne pas improviser une structure pour débloquer l'appel.
+- Tout autre échec, ou une réponse qu'on ne sait pas classer : appliquer la
+  section suivante. L'ambiguïté conduit à l'arrêt, jamais à une interprétation
+  par défaut.
+
+Une réponse encourageante ne vaut pas accès. Après toute issue « poursuivre »,
+confirmer l'accès réel en lisant l'espace puis en écrivant la note de cadrage
+prévue plus haut et en la relisant, avant de tenir le démarrage pour acquis.
 
 Cette création ne porte que sur l'espace configuré, et s'arrête après cette
 seconde tentative. Aucun réessai en boucle.

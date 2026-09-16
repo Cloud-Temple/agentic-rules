@@ -34,7 +34,15 @@ répare l'accès du jeton qui l'a créé et l'annonce dans `creator_access_repai
 un `already_exists` peut donc être un démarrage parfaitement normal. À
 l'inverse, une création réussie peut porter `creator_access_pending` quand le
 droit n'a pas pu être écrit, et le serveur demande alors de rejouer le même
-appel. La règle impose de lire ces champs, et borne l'ensemble à deux appels.
+appel. La règle impose de lire ces champs, et borne l'ensemble à deux appels. Une
+réponse qu'on ne sait pas classer conduit à l'arrêt, pas à une interprétation
+par défaut, et une réponse encourageante ne dispense pas de prouver l'accès par
+une lecture puis la note de cadrage.
+
+La règle laisse les `rules` vides pour que le serveur applique sa structure par
+défaut : elles sont immuables après création, une structure improvisée par
+l'agent resterait définitive. Un serveur sans modèle par défaut refuse alors
+l'appel ; c'est un défaut de configuration à signaler, pas un espace manquant.
 
 Cette lecture de la réponse vient d'une revue indépendante : une première
 rédaction traitait tout `already_exists` comme un problème de droits, ce qui
