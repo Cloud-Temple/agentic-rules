@@ -47,6 +47,14 @@ make_source() {
 # cas réel d'un dépôt correctement configuré.
 fill_values() {
   sed -i'' -e 's/: TO_FILL/: valeur-test/' "$1/AGENTIC_RULES/project.config.yml"
+  # instructions_file attend un chemin, pas une chaîne quelconque. Le cas
+  # nominal d'un dépôt qui n'a pas d'instructions propres est `disabled`.
+  set_config "$1" instructions_file disabled
+}
+
+# Remplace la valeur d'une clé dans la configuration d'une cible.
+set_config() {
+  sed -i'' -e "s|^\([[:space:]]*\)$2:.*|\1$2: $3|" "$1/AGENTIC_RULES/project.config.yml"
 }
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agentic test XXXXXX")"
@@ -110,6 +118,142 @@ printf '%s' "$out" | grep -q "HORS MANIFEST" && ok "l'empreinte orpheline est no
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "update répare tout" "$rc" "0"
 grep -q "valeur-test" "$T/AGENTIC_RULES/project.config.yml" && ok "update préserve la configuration" || ko "update préserve la configuration"
+
+printf 'instructions propres au dépôt\n'
+# Le pointeur est le seul champ dont la valeur désigne un fichier. Un chemin
+# faux est invisible sans contrôle : il ne casse rien jusqu'au jour où un agent
+# cherche le document et ne le trouve pas.
+set_config "$T" instructions_file disabled
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "disabled est accepté" "$rc" "0"
+
+set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un pointeur vers un fichier absent échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "POINTEUR MORT" && ok "le pointeur mort est nommé" || ko "le pointeur mort est nommé"
+printf '%s' "$out" | grep -q "DESIGN/INSTRUCTIONS.md" && ok "le chemin fautif est cité" || ko "le chemin fautif est cité"
+
+mkdir -p "$T/DESIGN" && printf 'instructions du projet\n' > "$T/DESIGN/INSTRUCTIONS.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "le même pointeur passe une fois le fichier créé" "$rc" "0"
+
+# Le document désigné vit hors de AGENTIC_RULES/ : il ne doit pas être traité
+# comme un ajout local, ni entrer dans le périmètre empreinté.
+grep -q "DESIGN/INSTRUCTIONS.md" "$T/AGENTIC_RULES/.provenance" \
+  && ko "le document désigné ne doit pas être empreinté" || ok "le document désigné reste hors empreinte"
+
+# Un répertoire n'est pas un document : la règle dit un seul fichier. Le message
+# doit dire pourquoi, pas prétendre que la cible n'existe pas.
+rm "$T/DESIGN/INSTRUCTIONS.md"; mkdir -p "$T/DESIGN/INSTRUCTIONS.md"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un répertoire ne vaut pas document" "$rc" "1"
+printf '%s' "$out" | grep -q "PAS UN FICHIER" && ok "le répertoire est diagnostiqué pour ce qu'il est" || ko "le répertoire est diagnostiqué pour ce qu'il est"
+rmdir "$T/DESIGN/INSTRUCTIONS.md"; printf 'instructions du projet\n' > "$T/DESIGN/INSTRUCTIONS.md"
+
+# Un lien cassé existe en tant que lien mais ne mène nulle part.
+ln -s "n-existe-pas.md" "$T/DESIGN/casse.md"
+set_config "$T" instructions_file "DESIGN/casse.md"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un lien cassé échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "LIEN CASSE" && ok "le lien cassé est diagnostiqué" || ko "le lien cassé est diagnostiqué"
+rm "$T/DESIGN/casse.md"; set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# Si readlink échoue, le contrôle doit refuser au lieu de conclure au hasard.
+mkdir -p "$WORK/faux-outils"
+printf '#!/bin/sh\nexit 1\n' > "$WORK/faux-outils/readlink"
+chmod +x "$WORK/faux-outils/readlink"
+ln -s "INSTRUCTIONS.md" "$T/DESIGN/lien-interne.md"
+set_config "$T" instructions_file "DESIGN/lien-interne.md"
+out="$(PATH="$WORK/faux-outils:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un readlink en échec fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -q "CHEMIN IRRESOLU" && ok "l'échec de résolution est nommé" || ko "l'échec de résolution est nommé"
+rm "$T/DESIGN/lien-interne.md"; set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# Un chemin qui sort du dépôt ferait lire un fichier arbitraire du poste. Le
+# cas dangereux est celui où la cible EXISTE : sans la garde, le contrôle passe
+# et l'agent lit un fichier hors du dépôt en croyant lire les règles du projet.
+printf 'contenu hors depot\n' > "$WORK/hors-depot.md"
+set_config "$T" instructions_file "../hors-depot.md"
+[ -f "$T/../hors-depot.md" ] && ok "la cible remontante existe vraiment" || ko "la cible remontante existe vraiment"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un chemin remontant vers un fichier existant échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "CHEMIN SORTANT" && ok "le chemin remontant est nommé" || ko "le chemin remontant est nommé"
+set_config "$T" instructions_file "/etc/passwd"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un chemin absolu échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "CHEMIN ABSOLU" && ok "le chemin absolu est nommé" || ko "le chemin absolu est nommé"
+
+# Un filtre sur la chaîne ne dit rien de la destination. Un lien symbolique au
+# nom anodin sort du dépôt sans contenir un seul `..` : c'est la forme
+# réaliste de la fuite, celle qu'un relecteur humain ne voit pas dans un diff.
+printf 'contenu hors depot par lien\n' > "$WORK/cible-du-lien.md"
+ln -s "$WORK/cible-du-lien.md" "$T/DESIGN/lien.md"
+set_config "$T" instructions_file "DESIGN/lien.md"
+[ -f "$T/DESIGN/lien.md" ] && ok "le lien est vu comme un fichier existant" || ko "le lien est vu comme un fichier existant"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un lien symbolique vers l'extérieur échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "HORS DEPOT" && ok "la sortie du dépôt est nommée" || ko "la sortie du dépôt est nommée"
+printf '%s' "$out" | grep -q "cible-du-lien.md" && ok "la destination réelle est citée" || ko "la destination réelle est citée"
+
+# Un lien qui reste dans le dépôt est légitime et ne doit pas être refusé.
+rm "$T/DESIGN/lien.md"
+ln -s "INSTRUCTIONS.md" "$T/DESIGN/lien.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un lien symbolique interne reste conforme" "$rc" "0"
+rm "$T/DESIGN/lien.md"
+
+# Deux points dans un nom de fichier ne sont pas une remontée de chemin.
+printf 'notes de version\n' > "$T/DESIGN/RELEASE-1.0..1.md"
+set_config "$T" instructions_file "DESIGN/RELEASE-1.0..1.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un nom de fichier contenant deux points reste conforme" "$rc" "0"
+set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# La lecture doit tenir compte de la section. Le schéma réutilise déjà `server`
+# sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
+# la valeur de la mauvaise section, en silence. Un leurre placé AVANT la section
+# project le démontre : une lecture aveugle prendrait son chemin, qui est mort.
+# Deux leurres, un de chaque côté de la vraie clé. Un seul ne prouverait rien :
+# placé avant, la règle « dernière occurrence gagne » retombe sur la bonne
+# valeur par coïncidence, et une lecture aveugle à la section passerait le test.
+cp "$T/AGENTIC_RULES/project.config.yml" "$WORK/cfg.bak"
+{ printf 'leurre_avant:\n  instructions_file: DESIGN/AVANT-N-EXISTE-PAS.md\n\n'
+  cat "$T/AGENTIC_RULES/project.config.yml"
+  printf '\nleurre_apres:\n  instructions_file: DESIGN/APRES-N-EXISTE-PAS.md\n'
+} > "$WORK/cfg.tmp"
+mv "$WORK/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
+check "trois clés homonymes coexistent" "$(grep -c 'instructions_file' "$T/AGENTIC_RULES/project.config.yml")" "3"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "les clés homonymes hors section sont ignorées des deux côtés" "$rc" "0"
+cp "$WORK/cfg.bak" "$T/AGENTIC_RULES/project.config.yml"
+
+# Clé dupliquée dans la MÊME section : les lecteurs YAML gardent la dernière.
+# Une configuration pareille est malformée, mais le contrôle ne doit pas se
+# fonder sur une valeur que personne d'autre ne lirait.
+cp "$T/AGENTIC_RULES/project.config.yml" "$WORK/cfg.bak2"
+sed -i'' -e 's|^\([[:space:]]*\)instructions_file: DESIGN/INSTRUCTIONS.md|\1instructions_file: DESIGN/N-EXISTE-PAS.md\n\1instructions_file: DESIGN/INSTRUCTIONS.md|' \
+  "$T/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "une clé dupliquée retient la dernière valeur" "$rc" "0"
+cp "$WORK/cfg.bak2" "$T/AGENTIC_RULES/project.config.yml"
+
+# Une configuration en schéma 1 n'a pas la clé. Son absence ne bloque rien,
+# sinon la montée de version casserait les dépôts déjà installés.
+grep -v '^  instructions_file:' "$T/AGENTIC_RULES/project.config.yml" > "$T/AGENTIC_RULES/cfg.tmp"
+mv "$T/AGENTIC_RULES/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "une configuration sans la clé reste conforme" "$rc" "0"
+
+# Le TO_FILL doit continuer de bloquer, sinon la clé serait oubliable en silence.
+printf '  instructions_file: TO_FILL\n' >> "$T/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un TO_FILL sur la clé échoue" "$rc" "1"
+"$SCRIPT" update "$T" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1
+grep -v '^  instructions_file: TO_FILL' "$T/AGENTIC_RULES/project.config.yml" > "$T/AGENTIC_RULES/cfg.tmp"
+mv "$T/AGENTIC_RULES/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
+set_config "$T" instructions_file disabled
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "retour à un état conforme" "$rc" "0"
 
 printf 'montée de version\n'
 before="$(grep '^commit=' "$T/AGENTIC_RULES/.provenance" | cut -d= -f2)"

@@ -3,6 +3,50 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.2.0] - 2026-09-16
+
+### Ajouté
+
+- `project.config.yml` : clé `project.instructions_file`. Elle désigne un
+  document du dépôt que l'agent lit au démarrage, après `PROJECT_RULES.md`.
+  Un dépôt peut enfin porter du savoir qui ne vaut que pour lui sans sortir du
+  corpus, et sans qu'une mise à jour l'écrase.
+- `MAIN_RULES.md` : une ligne d'index pour ce document, et une section qui borne
+  ce qu'il a le droit de contenir.
+- `agentic-rules.sh` : le contrôle de conformité échoue si ce champ porte un
+  chemin absolu, un chemin qui remonte hors du dépôt, ou un chemin vers un
+  fichier qui n'existe pas.
+
+### Modifié
+
+- Le schéma de configuration passe en version 2, et `MAIN_RULES.md` dit
+  enfin à quoi sert ce numéro. Un champ que la génération déclarée connaissait
+  mais qui a disparu du fichier reste un champ non traité, donc bloquant. Un
+  champ introduit plus tard est simplement absent et vaut `disabled`. Les huit
+  dépôts déjà installés restent donc conformes sans être touchés.
+- `config_value` lit une clé par son chemin complet, `project.instructions_file`
+  et non `instructions_file`. Le schéma réutilise `server` sous `memory.live` et
+  sous `memory.graph` : une lecture par nom terminal rendait la valeur de la
+  mauvaise section, en silence.
+
+### Pourquoi un pointeur plutôt qu'un fichier réservé
+
+Un fichier réservé dans `AGENTIC_RULES/` aurait demandé une seconde exception
+dans le répertoire dont la promesse est d'être identique partout, et obligé
+chaque dépôt à déplacer son savoir. Le pointeur réutilise le seul canal de
+variation existant et laisse chaque document là où le projet le range.
+
+### Confinement
+
+Le chemin désigne un fichier du dépôt. Un chemin absolu, une remontée hors de la
+racine, ou un lien symbolique dont la cible sort du dépôt sont refusés. Cette
+règle vaut des deux côtés : le contrôle de conformité la vérifie, et
+`MAIN_RULES.md` la donne à l'agent, qui n'exécute jamais ce contrôle. Un
+pointeur non vérifiable ne s'ouvre pas.
+
+Le détail des quatre passes de revue qui ont mené à cette forme est dans la
+PR #7, pas ici.
+
 ## [1.1.0] - 2026-09-16
 
 ### Ajouté
