@@ -77,13 +77,21 @@ Selon ce que la recherche établit :
    propriétaire, et les dire. S'ils désignent le projet, ou ne le contredisent
    pas, retenir ce serveur sans rien demander, même si ce n'est pas celui que
    `memory.live.server` déclare. S'ils désignent manifestement un autre projet,
-   ce n'est pas l'espace cherché mais une collision d'identifiant : le signaler
-   et **appliquer « Mémoire absente ou en panne »**, qui définit la portée de cet
-   arrêt. « Ne jamais substituer un espace personnel ou celui d'un autre projet »
-   vaut ici comme ailleurs, et un identifiant qui coïncide ne vaut pas identité.
+   ce n'est pas l'espace cherché mais une collision d'identifiant : **arrêter**,
+   au sens défini ci-dessous. « Ne jamais substituer un espace personnel ou celui
+   d'un autre projet » vaut ici comme ailleurs, et un identifiant qui coïncide ne
+   vaut pas identité. Description et propriétaire tous deux vides ne contredisent
+   rien : retenir, en disant qu'aucune information d'identité n'était lisible.
 3. Trouvé sur aucun serveur, sans refus d'accès en suspens : appliquer
    « Espace mémoire absent ». La création a lieu sur
    `<memory.live.server>`.
+
+Une collision arrête le travail avec la portée d'un blocage mémoire : arrêt du
+travail courant y compris local, aucune édition de code, opération Git ou action
+de livraison. Elle n'en partage pas le remède. Ne rien créer, ne pas relancer la
+recherche et ne pas demander l'ouverture d'un accès à cet espace : il n'y a rien
+à élucider, l'identité est tranchée, et c'est `memory.live.space_id` qui désigne
+le mauvais espace. Seule une personne peut corriger ce champ.
 
 Le serveur retenu est le serveur effectif ; toute la suite de la session le
 cible, lui et pas un autre. Dire lequel a été retenu, dans tous les cas.

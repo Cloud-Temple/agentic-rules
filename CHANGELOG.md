@@ -27,9 +27,10 @@ versionnement sémantique.
   un serveur qui refuse au lieu de répondre « absent » ramenait le doublon vide.
 - `PROJECT_RULES.md` : un identifiant trouvé sur un seul serveur mais dont la
   description ou le propriétaire désigne un autre projet est une collision, pas
-  l'espace cherché. L'agent le signale et applique « Mémoire absente ou en
-  panne », qui définit la portée de l'arrêt, au lieu d'adopter la mémoire d'un
-  tiers.
+  l'espace cherché. L'agent arrête, avec la portée d'un blocage mémoire mais sans
+  son remède : ne rien créer, ne pas relancer la recherche, ne pas demander
+  l'ouverture d'un accès à l'espace d'un tiers. Seule une personne peut corriger
+  `memory.live.space_id`.
 - `PROJECT_RULES.md` : la correction de `memory.live.server` désigne où vivent les
   données persistées du projet. Elle relève de la dernière ligne du tableau de
   risque de `WORKFLOW_ENGINEERING.md` et passe par une PR dédiée, jamais par un
