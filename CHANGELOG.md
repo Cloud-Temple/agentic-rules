@@ -13,10 +13,14 @@ versionnement sémantique.
   `xhigh`, serveurs MCP chargés, passent sans erreur. La contrainte valait peut-
   être pour l'API directe, pas pour la CLI, qui est la façon dont le corpus fait
   réellement relire.
+  Seule la CLI a été mesurée ; aucun autre chemin d'invocation n'est décrit par le
+  corpus, et aucune contrainte n'est réintroduite sur la foi d'une supposition.
 - `REVIEWERS.md` : le tableau annonçait ne déclarer aucun niveau de raisonnement
-  alors que la colonne de `codex` en imposait un. La contradiction est levée, et
-  le tableau dit maintenant qu'il ne porte aucune contrainte propre à un
-  fournisseur.
+  alors que la colonne de `codex` en imposait un. La contradiction est levée par
+  le retrait de ce niveau, sans ajout de phrase.
+- `REVIEWERS.md` : la colonne « Contrainte d'invocation » de `codex` porte
+  désormais une contrainte réelle et propre à ce fournisseur, ses outils MCP
+  absents de la liste visible.
 
 ### Ajouté
 
@@ -25,10 +29,17 @@ versionnement sémantique.
   et parfois un blocage annoncé sans qu'un appel ait été tenté, indiscernable
   d'un vrai blocage. Une contrainte technique réelle se nomme avec son périmètre
   au lieu d'être généralisée.
-- `REVIEWERS.md` : nommer le serveur mémoire et l'espace dans le dossier de
-  revue quand plusieurs serveurs exposent des outils homonymes. Sans cette
-  précision, le relecteur adresse le mauvais serveur et rend « accès refusé »,
-  une erreur d'adressage qui se lit comme une panne.
+- `REVIEWERS.md` : les outils MCP de `codex` sont différés. Ils n'apparaissent
+  pas dans la liste que le modèle introspecte et restent appelables par leur nom.
+  Un relecteur qui se fie à sa liste conclut qu'il n'a pas de mémoire, et le
+  prérequis bloquant de `MAIN_RULES.md` arrête la revue avant qu'elle commence.
+  Ce que l'on fournit au relecteur doit le dire, et lui laisser la vérification
+  de son propre accès plutôt que de l'en dispenser.
+- `REVIEWERS.md` : nommer le serveur mémoire et l'espace parmi les éléments de
+  contexte fournis au relecteur quand plusieurs serveurs exposent des outils
+  homonymes. Le relecteur travaille en session non interactive et ne peut pas
+  exécuter la branche de « Trouver l'espace du projet » qui demande à
+  l'utilisateur de choisir ; lever l'ambiguïté en amont l'en dispense.
 
 ## [1.3.0] - 2026-09-16
 

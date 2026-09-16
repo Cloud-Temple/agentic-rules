@@ -10,14 +10,12 @@ par la clé `review.reviewer_provider` de `project.config.yml`.
 | Clé | Fournisseur | Modèle | Contrainte d'invocation |
 | --- | --- | --- | --- |
 | `claude` | Anthropic | `claude-sonnet-5` | Session distincte, lecture seule, invocation non interactive et bornée. |
-| `codex` | OpenAI | `gpt-5.6-terra` | Session distincte, lecture seule, invocation non interactive et bornée. |
+| `codex` | OpenAI | `gpt-5.6-terra` | Les outils MCP n'apparaissent pas dans la liste visible du modèle et restent appelables par leur nom ; voir les règles d'emploi. |
 | `llmaas` | Cloud Temple LLMaaS (SecNumCloud) | `qwen3.8:27b` | Alias appelable du modèle `Qwen/Qwen3.8-27B-FP8`, endpoint `api.ai.cloud-temple.com`. |
 
 Aucun niveau de raisonnement, aucun tier et aucune variante ne sont déclarés ici.
 Un seul modèle par fournisseur, pour que la revue soit reproductible et que deux
-dépôts ne produisent pas des verdicts issus de configurations différentes. Ce
-tableau ne porte donc aucune contrainte propre à un fournisseur au-delà de ces
-trois colonnes.
+dépôts ne produisent pas des verdicts issus de configurations différentes.
 
 ## Règles d'emploi
 
@@ -37,12 +35,24 @@ trois colonnes.
   tenté, ce qui est indiscernable d'un vrai blocage. Si une contrainte technique
   existe pour un usage précis, la nommer avec son périmètre exact plutôt que de
   la généraliser à toutes les revues.
-- **Nommer le serveur mémoire et l'espace dans le dossier de revue** quand
-  plusieurs serveurs exposent des outils homonymes. Sans cette précision, le
-  relecteur adresse le mauvais serveur et rend « accès refusé » : c'est une
-  erreur d'adressage, pas une panne, et elle se lit comme une panne. La
-  résolution du serveur effectif est décrite dans « Trouver l'espace du projet »
-  de `PROJECT_RULES.md`.
+- **Les outils MCP de `codex` sont différés.** Ils n'apparaissent pas dans la
+  liste que le modèle introspecte, et ils restent appelables par leur nom.
+  Mesuré au niveau de raisonnement par défaut : vingt-deux outils visibles, aucun
+  des serveurs mémoire configurés, et l'appel nommé d'un outil absent de la liste
+  aboutit. Un relecteur qui se fie à sa liste conclut honnêtement qu'il n'a pas
+  de mémoire, et le prérequis bloquant de `MAIN_RULES.md` arrête la revue avant
+  qu'elle commence. Ce que l'on fournit au relecteur doit donc dire que l'absence
+  d'un outil de la liste ne prouve pas son indisponibilité, qu'il faut l'appeler
+  par son nom, et qu'il lui revient de vérifier son propre accès mémoire. Ne
+  jamais l'en dispenser au motif que la session qui délègue l'a déjà fait : ce
+  serait lui demander d'ignorer une règle pour pouvoir juger si elle est tenue.
+- **Nommer le serveur mémoire et l'espace** parmi les éléments de contexte
+  fournis au relecteur, quand plusieurs serveurs exposent des outils homonymes.
+  Le relecteur travaille en session non interactive : il ne peut pas exécuter la
+  branche de « Trouver l'espace du projet », dans `PROJECT_RULES.md`, qui demande
+  à l'utilisateur de choisir entre deux espaces homonymes. Lever l'ambiguïté en
+  amont l'en dispense. Sans cette précision, il adresse le mauvais serveur et
+  rend « accès refusé » : une erreur d'adressage qui se lit comme une panne.
 
 ## Mise à jour
 
