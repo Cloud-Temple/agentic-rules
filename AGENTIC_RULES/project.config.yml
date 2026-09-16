@@ -1,11 +1,14 @@
 # Valeurs propres au dépôt Cloud-Temple/agentic-rules.
 # Voir project.config.example.yml pour le sens des trois états.
 
-schema_version: 1
+schema_version: 2
 
 project:
   name: agentic-rules
   public_language: fr
+  # Ce dépôt est le corpus lui-même : il n'a rien à dire qui ne soit déjà dans
+  # les règles.
+  instructions_file: disabled
 
 memory:
   live:

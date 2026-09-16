@@ -140,6 +140,16 @@ config_values() {
   sed -e 's/[[:space:]]#.*$//' -e 's/^[[:space:]]*#.*$//' "$1" | grep -v '^[[:space:]]*$'
 }
 
+# Valeur d'une clé de la configuration, sans dépendance à un analyseur YAML.
+# Rend une chaîne vide si la clé est absente : une configuration en schéma 1
+# n'a pas les clés ajoutées depuis.
+config_value() {
+  config_values "$1" \
+    | sed -n "s/^[[:space:]]*$2:[[:space:]]*//p" \
+    | head -1 \
+    | sed -e 's/^["'"'"']//' -e 's/["'"'"']$//' -e 's/[[:space:]]*$//'
+}
+
 cmd_install() {
   local target="$1" ref="$2" source="$3" force="$4" src stage f conflicts=""
   [ -d "$target" ] || die "cible inexistante : $target"
@@ -242,6 +252,18 @@ cmd_check() {
   if [ -e "$target/$CONFIG" ]; then
     config_values "$target/$CONFIG" | grep -q "$UNSET_MARKER" \
       && { printf 'A RENSEIGNER %s contient encore des %s\n' "$CONFIG" "$UNSET_MARKER"; rc=1; }
+    # Un pointeur vers un document propre au dépôt ne se vérifie pas tout seul :
+    # sans ce contrôle, un chemin devenu faux reste invisible jusqu'à ce qu'un
+    # agent cherche le fichier et ne le trouve pas.
+    local notes
+    notes="$(config_value "$target/$CONFIG" instructions_file)"
+    case "$notes" in
+      ""|disabled|"$UNSET_MARKER") ;;
+      /*) printf 'CHEMIN ABSOLU instructions_file doit être relatif à la racine : %s\n' "$notes"; rc=1 ;;
+      *..*) printf 'CHEMIN SORTANT instructions_file remonte hors du dépôt : %s\n' "$notes"; rc=1 ;;
+      *) [ -f "$target/$notes" ] \
+           || { printf 'POINTEUR MORT instructions_file désigne %s, qui n existe pas\n' "$notes"; rc=1; } ;;
+    esac
   else
     printf 'MANQUANT   %s\n' "$CONFIG"; rc=1
   fi

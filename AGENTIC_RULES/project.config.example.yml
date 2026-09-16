@@ -13,7 +13,7 @@
 # faire passer le contrôle : le contrôle ne lit que les valeurs, pas ces
 # commentaires, mais une clé manquante reste une clé manquante.
 
-schema_version: 1
+schema_version: 2
 
 project:
   # Nom court du dépôt, tel qu'il apparaît sur GitHub.
@@ -21,6 +21,11 @@ project:
   # Langue publique établie du projet, par exemple fr ou en. Porter disabled
   # si le projet n'en a pas : l'agent écrit alors dans la langue de l'utilisateur.
   public_language: TO_FILL
+  # Document d'instructions propres à ce dépôt, chemin relatif à la racine.
+  # Il décrit le projet, jamais la méthode : voir MAIN_RULES.md pour ce qu'il
+  # a le droit de contenir. Porter disabled si le dépôt n'en a pas. Le contrôle
+  # de conformité échoue si le fichier désigné n'existe pas.
+  instructions_file: TO_FILL
 
 memory:
   live:

@@ -47,6 +47,14 @@ make_source() {
 # cas réel d'un dépôt correctement configuré.
 fill_values() {
   sed -i'' -e 's/: TO_FILL/: valeur-test/' "$1/AGENTIC_RULES/project.config.yml"
+  # instructions_file attend un chemin, pas une chaîne quelconque. Le cas
+  # nominal d'un dépôt qui n'a pas d'instructions propres est `disabled`.
+  set_config "$1" instructions_file disabled
+}
+
+# Remplace la valeur d'une clé dans la configuration d'une cible.
+set_config() {
+  sed -i'' -e "s|^\([[:space:]]*\)$2:.*|\1$2: $3|" "$1/AGENTIC_RULES/project.config.yml"
 }
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agentic test XXXXXX")"
@@ -110,6 +118,67 @@ printf '%s' "$out" | grep -q "HORS MANIFEST" && ok "l'empreinte orpheline est no
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "update répare tout" "$rc" "0"
 grep -q "valeur-test" "$T/AGENTIC_RULES/project.config.yml" && ok "update préserve la configuration" || ko "update préserve la configuration"
+
+printf 'instructions propres au dépôt\n'
+# Le pointeur est le seul champ dont la valeur désigne un fichier. Un chemin
+# faux est invisible sans contrôle : il ne casse rien jusqu'au jour où un agent
+# cherche le document et ne le trouve pas.
+set_config "$T" instructions_file disabled
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "disabled est accepté" "$rc" "0"
+
+set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un pointeur vers un fichier absent échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "POINTEUR MORT" && ok "le pointeur mort est nommé" || ko "le pointeur mort est nommé"
+printf '%s' "$out" | grep -q "DESIGN/INSTRUCTIONS.md" && ok "le chemin fautif est cité" || ko "le chemin fautif est cité"
+
+mkdir -p "$T/DESIGN" && printf 'instructions du projet\n' > "$T/DESIGN/INSTRUCTIONS.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "le même pointeur passe une fois le fichier créé" "$rc" "0"
+
+# Le document désigné vit hors de AGENTIC_RULES/ : il ne doit pas être traité
+# comme un ajout local, ni entrer dans le périmètre empreinté.
+grep -q "DESIGN/INSTRUCTIONS.md" "$T/AGENTIC_RULES/.provenance" \
+  && ko "le document désigné ne doit pas être empreinté" || ok "le document désigné reste hors empreinte"
+
+# Un répertoire n'est pas un document : la règle dit un seul fichier.
+rm "$T/DESIGN/INSTRUCTIONS.md"; mkdir -p "$T/DESIGN/INSTRUCTIONS.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un répertoire ne vaut pas document" "$rc" "1"
+rmdir "$T/DESIGN/INSTRUCTIONS.md"; printf 'instructions du projet\n' > "$T/DESIGN/INSTRUCTIONS.md"
+
+# Un chemin qui sort du dépôt ferait lire un fichier arbitraire du poste. Le
+# cas dangereux est celui où la cible EXISTE : sans la garde, le contrôle passe
+# et l'agent lit un fichier hors du dépôt en croyant lire les règles du projet.
+printf 'contenu hors depot\n' > "$WORK/hors-depot.md"
+set_config "$T" instructions_file "../hors-depot.md"
+[ -f "$T/../hors-depot.md" ] && ok "la cible remontante existe vraiment" || ko "la cible remontante existe vraiment"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un chemin remontant vers un fichier existant échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "CHEMIN SORTANT" && ok "le chemin remontant est nommé" || ko "le chemin remontant est nommé"
+set_config "$T" instructions_file "/etc/passwd"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un chemin absolu échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "CHEMIN ABSOLU" && ok "le chemin absolu est nommé" || ko "le chemin absolu est nommé"
+
+# Une configuration en schéma 1 n'a pas la clé. Son absence ne bloque rien,
+# sinon la montée de version casserait les dépôts déjà installés.
+grep -v '^  instructions_file:' "$T/AGENTIC_RULES/project.config.yml" > "$T/AGENTIC_RULES/cfg.tmp"
+mv "$T/AGENTIC_RULES/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "une configuration sans la clé reste conforme" "$rc" "0"
+
+# Le TO_FILL doit continuer de bloquer, sinon la clé serait oubliable en silence.
+printf '  instructions_file: TO_FILL\n' >> "$T/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un TO_FILL sur la clé échoue" "$rc" "1"
+"$SCRIPT" update "$T" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1
+grep -v '^  instructions_file: TO_FILL' "$T/AGENTIC_RULES/project.config.yml" > "$T/AGENTIC_RULES/cfg.tmp"
+mv "$T/AGENTIC_RULES/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
+set_config "$T" instructions_file disabled
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "retour à un état conforme" "$rc" "0"
 
 printf 'montée de version\n'
 before="$(grep '^commit=' "$T/AGENTIC_RULES/.provenance" | cut -d= -f2)"

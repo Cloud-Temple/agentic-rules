@@ -13,12 +13,35 @@ le contexte. Les chemins sont relatifs à la racine du projet.
 | `AGENTIC_RULES/WORKFLOW_GIT.md` | Avant une opération Git ou GitHub. |
 | `AGENTIC_RULES/WORKFLOW_GIT_EPIC.md` | Si la tâche concerne un EPIC, un Project ou un train de release RC. |
 | `AGENTIC_RULES/REVIEWERS.md` | Avant de solliciter une revue indépendante. |
+| Le document désigné par `project.instructions_file` | Au démarrage, après `PROJECT_RULES.md`, quand ce champ porte un chemin. |
 
 Les valeurs propres au dépôt ne figurent jamais dans ces règles. L'agent les lit
 dans `AGENTIC_RULES/project.config.yml`, seul fichier de ce répertoire qui varie
 d'un projet à l'autre. Un champ vaut une valeur, `disabled` s'il est volontairement
 inutilisé, ou `TO_FILL` s'il n'a pas encore été traité. Un `TO_FILL` sur un champ
-nécessaire à la tâche courante est un blocage, pas une valeur par défaut.
+nécessaire à la tâche courante est un blocage, pas une valeur par défaut. Une
+configuration qui déclare `schema_version: 1` ne connaît pas les champs ajoutés
+depuis ; leur absence y vaut `disabled` et ne bloque rien.
+
+## Instructions propres au dépôt
+
+Un dépôt porte parfois du savoir que ces règles ne peuvent pas contenir, parce
+qu'il ne vaut que pour lui : l'objectif d'un lot en cours, le document qui fait
+foi sur l'architecture, un protocole de coordination avec une autre équipe, une
+convention locale. `project.instructions_file` désigne ce document. Il vit où le
+projet le range déjà ; ces règles ne lui imposent ni emplacement ni nom.
+
+Ce document décrit **le projet**, jamais la méthode. Il ne définit ni règle
+mémoire, ni workflow Git, ni politique de revue, ni point d'autorisation
+humaine, et ne rouvre aucun arbitrage tranché ici. En cas de contradiction avec
+ce corpus, le corpus l'emporte : signaler le conflit, ne pas choisir à sa place.
+
+Un seul document, pas un répertoire. S'il doit renvoyer à d'autres fichiers du
+dépôt, qu'il les cite ; il ne devient pas l'index d'un second corpus.
+
+Si le champ porte un chemin et que le fichier n'existe pas, c'est un défaut de
+configuration : le signaler et poursuivre. Ce n'est pas un prérequis de sûreté
+comme la mémoire, et cela n'arrête pas le travail.
 
 Ces fichiers définissent chacun leur domaine. La demande explicite de
 l'utilisateur prime sur les conventions du projet, dans les limites des

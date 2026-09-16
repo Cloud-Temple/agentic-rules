@@ -3,6 +3,44 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.2.0] - 2026-09-16
+
+### Ajouté
+
+- `project.config.yml` : clé `project.instructions_file`. Elle désigne un
+  document du dépôt que l'agent lit au démarrage, après `PROJECT_RULES.md`.
+  Un dépôt peut enfin porter du savoir qui ne vaut que pour lui sans sortir du
+  corpus, et sans qu'une mise à jour l'écrase.
+- `MAIN_RULES.md` : une ligne d'index pour ce document, et une section qui borne
+  ce qu'il a le droit de contenir.
+- `agentic-rules.sh` : le contrôle de conformité échoue si ce champ porte un
+  chemin absolu, un chemin qui remonte hors du dépôt, ou un chemin vers un
+  fichier qui n'existe pas.
+
+### Modifié
+
+- Le schéma de configuration passe en version 2. Une configuration qui déclare
+  `schema_version: 1` ne connaît pas les champs ajoutés depuis : leur absence y
+  vaut `disabled` et ne bloque rien. Les dépôts déjà installés restent conformes
+  sans modification.
+
+### Pourquoi un pointeur plutôt qu'un fichier réservé
+
+La première piste était un `AGENTIC_RULES/PROJECT_NOTES.md` hors charge utile.
+Elle demandait une deuxième exception dans le répertoire dont la promesse entière
+est « identique à l'octet près partout », obligeait chaque dépôt à déplacer son
+savoir dans un fichier neuf, et produisait un fichier qui ressemble à du corpus
+sans en être. Le pointeur réutilise le seul canal de variation qui existe déjà,
+et laisse chaque document là où le projet le range.
+
+### Ce que le pointeur ne doit pas devenir
+
+Le document désigné décrit le projet, jamais la méthode. Il ne définit ni règle
+mémoire, ni workflow Git, ni politique de revue, ni point d'autorisation humaine.
+En cas de contradiction avec le corpus, le corpus l'emporte et l'agent signale le
+conflit. Un seul fichier, pas un répertoire, pour qu'il ne devienne pas l'index
+d'un second corpus local.
+
 ## [1.1.0] - 2026-09-16
 
 ### Ajouté
