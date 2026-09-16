@@ -75,20 +75,33 @@ Le serveur ne distingue pas un espace absent d'un espace existant hors des
 droits du jeton : les deux rendent le même refus d'accès. C'est la tentative de
 création qui lève l'ambiguïté, parce qu'elle n'écrase jamais un espace existant.
 
-Quand l'espace configuré n'est pas accessible :
+Quand l'espace configuré n'est pas accessible, tenter `space_create` avec
+l'identifiant **exact** de `memory.live.space_id` et une description tirée du
+projet. Ne jamais inventer un identifiant, ni le dériver, ni y ajouter un
+suffixe : il est renseigné par une personne. Laisser les `rules` vides pour que
+le serveur applique sa structure par défaut ; elles sont immuables après
+création, et une structure improvisée resterait définitive.
 
-1. Tenter `space_create` **une seule fois**, avec l'identifiant **exact** de
-   `memory.live.space_id` et une description tirée du projet. Ne jamais inventer
-   un identifiant, ni le dériver, ni y ajouter un suffixe : il est renseigné par
-   une personne.
-2. Si la création rend « existe déjà », l'espace existe et le jeton courant n'y
-   a pas droit. **Arrêter** et demander l'ouverture de l'accès. Ne pas contourner
-   en créant une variante de l'identifiant.
-3. Si la création aboutit, poursuivre le démarrage normal, en écrivant la note
-   de cadrage prévue plus haut et en la relisant.
-4. Si la création échoue pour un autre motif, appliquer la section suivante.
+Lire ensuite la réponse en entier, pas seulement son statut. Un espace existant
+n'est pas forcément celui d'un tiers : le serveur répare l'accès du jeton qui
+l'a créé, et l'annonce dans des champs distincts du statut. Sur Live Memory ces
+champs sont aujourd'hui `creator_access_repair` et `creator_access_pending` ;
+vérifier les noms réellement exposés par le serveur avant de s'y fier.
 
-Cette création ne porte que sur l'espace configuré.
+- Création réussie, sans réserve sur l'accès : poursuivre le démarrage normal,
+  en écrivant la note de cadrage prévue plus haut et en la relisant.
+- « Existe déjà » avec une réparation d'accès annoncée : l'espace est bien celui
+  de ce jeton et son droit vient d'être rétabli. Poursuivre de même.
+- « Existe déjà » sans réparation d'accès : l'espace appartient à un autre jeton.
+  **Arrêter** et demander l'ouverture de l'accès. Ne pas contourner en créant
+  une variante de l'identifiant.
+- Accès créateur annoncé comme non assuré : l'espace existe mais le droit n'est
+  pas encore écrit. Le serveur demande alors de rejouer exactement le même
+  appel ; le faire **une fois**. Si la réserve persiste, arrêter et signaler.
+- Tout autre échec : appliquer la section suivante.
+
+Cette création ne porte que sur l'espace configuré, et s'arrête après cette
+seconde tentative. Aucun réessai en boucle.
 
 ## Mémoire absente ou en panne
 
@@ -103,7 +116,7 @@ vérifier la connectivité et les accès au service déclaré, corriger sa confi
 d'accès si demandé, puis vérifier une écriture utile et sa relecture. Aucune
 édition de code métier, opération Git/GitHub ou action de livraison ne relève
 de cette exception. Un refus d'accès n'est pas la preuve d'un espace inexistant :
-la seule action admise pour trancher est la tentative unique de création décrite
+la seule action admise pour trancher est la tentative de création bornée décrite
 en « Espace mémoire absent ». Ne pas changer d'espace, élargir les droits ni
 réessayer en boucle. Si une intervention externe est nécessaire, l'indiquer.
 

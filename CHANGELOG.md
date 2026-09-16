@@ -27,8 +27,18 @@ versionnement sémantique.
 Le serveur rend le même refus d'accès pour un espace absent et pour un espace
 existant hors des droits du jeton, donc la lecture seule ne permet pas de
 trancher. `space_create` sur un espace existant rend `already_exists` sans rien
-écraser. La tentative est donc à la fois le test et le remède : elle crée quand
-l'espace manque, et elle révèle un problème de droits quand il existe déjà.
+écraser. La tentative sert donc de test autant que de remède.
+
+Le statut seul ne suffit pas à conclure. Sur un espace existant, le serveur
+répare l'accès du jeton qui l'a créé et l'annonce dans `creator_access_repair` ;
+un `already_exists` peut donc être un démarrage parfaitement normal. À
+l'inverse, une création réussie peut porter `creator_access_pending` quand le
+droit n'a pas pu être écrit, et le serveur demande alors de rejouer le même
+appel. La règle impose de lire ces champs, et borne l'ensemble à deux appels.
+
+Cette lecture de la réponse vient d'une revue indépendante : une première
+rédaction traitait tout `already_exists` comme un problème de droits, ce qui
+aurait bloqué au démarrage un agent dont l'accès venait d'être réparé.
 
 ## [1.0.0] - 2026-09-15
 
