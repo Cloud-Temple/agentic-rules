@@ -63,7 +63,9 @@ Un serveur qui oppose un **refus d'accès** ne répond pas « absent » : il ne
 distingue pas un espace inexistant d'un espace hors des droits du jeton. Ne pas
 le compter comme « pas trouvé ». Le signaler, et tant qu'un refus n'est pas
 élucidé, ne rien créer : appliquer « Mémoire absente ou en panne ». Créer après
-un refus produirait le doublon vide que cette section existe pour éviter.
+un refus produirait le doublon vide que cette section existe pour éviter. Un
+refus sur un serveur n'empêche pas, en revanche, de retenir un espace trouvé sans
+ambiguïté sur un autre : il interdit la création, pas la rétention.
 
 Selon ce que la recherche établit :
 
@@ -71,11 +73,14 @@ Selon ce que la recherche établit :
    et attendre sa réponse. Deux espaces homonymes portent deux mémoires
    distinctes ; en choisir un revient à ignorer l'autre, et ce choix n'appartient
    pas à l'agent.
-2. Trouvé sur un seul serveur : le retenir sans rien demander, même si ce n'est
-   pas celui que `memory.live.server` déclare. Un identifiant peut coïncider avec
-   l'espace d'un autre projet : lire sa description et son propriétaire, et les
-   dire. C'est une vérification, pas une question ; elle n'arrête pas le
-   démarrage, elle le rend auditable.
+2. Trouvé sur un seul serveur : lire d'abord sa description et son
+   propriétaire, et les dire. S'ils désignent le projet, ou ne le contredisent
+   pas, retenir ce serveur sans rien demander, même si ce n'est pas celui que
+   `memory.live.server` déclare. S'ils désignent manifestement un autre projet,
+   ce n'est pas l'espace cherché mais une collision d'identifiant : **arrêter et
+   le signaler**. « Ne jamais substituer un espace personnel ou celui d'un autre
+   projet » vaut ici comme ailleurs, et un identifiant qui coïncide ne vaut pas
+   identité.
 3. Trouvé sur aucun serveur, sans refus d'accès en suspens : appliquer
    « Espace mémoire absent ». La création a lieu sur
    `<memory.live.server>`.
@@ -91,12 +96,13 @@ mémoire ferait retomber chaque session suivante dans la même recherche.
 
 Cette correction change le serveur que cibleront les sessions suivantes : c'est
 un changement de configuration qui modifie l'exécution, au sens de
-`WORKFLOW_ENGINEERING.md`, et non une retouche éditoriale. Elle suit le workflow
-Git ordinaire, branche et PR comprises, jamais un commit direct sur une branche
-partagée. La porter dans la branche de la tâche en cours si elle existe, sinon
-ouvrir une PR dédiée d'une ligne. Tant qu'elle n'est pas fusionnée, la recherche
-se refait à chaque session ; c'est le prix de la traçabilité, pas un défaut à
-contourner.
+`WORKFLOW_ENGINEERING.md`, et non une retouche éditoriale. Elle désigne où vivent les
+données persistées du projet, donc elle relève de la dernière ligne du tableau de
+`WORKFLOW_ENGINEERING.md` : revue indépendante du plan avant exécution, puis du
+résultat. Elle passe par une **PR dédiée**, jamais par un commit direct et jamais
+mêlée à la branche d'une autre tâche, que `WORKFLOW_GIT.md` demande de garder
+limitée à son besoin. Tant qu'elle n'est pas fusionnée, la recherche se refait à
+chaque session ; c'est le prix de la traçabilité, pas un défaut à contourner.
 
 ## Au démarrage
 

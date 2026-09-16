@@ -134,8 +134,10 @@ l'utilisateur dans un seul cas, nommé ici et nulle part ailleurs : quand
 le choix de l'espace lui appartient, et l'agent attend sa réponse. Ce cas échappe
 au principe « continuer le travail indépendant de la réponse » pour une raison
 précise : deux espaces homonymes portent deux mémoires distinctes, et aucun
-travail n'est indépendant de celle qui sera chargée. Voir « Trouver l'espace du
-projet » dans `PROJECT_RULES.md`.
+travail n'est indépendant de celle qui sera chargée. Cette attente est bornée :
+sans réponse, le démarrage relève de « Mémoire absente ou en panne », donc
+signaler et arrêter. Ne pas attendre indéfiniment, ne pas trancher par défaut.
+Voir « Trouver l'espace du projet » dans `PROJECT_RULES.md`.
 
 Dans le périmètre de la tâche, avancer sans confirmations supplémentaires pour
 les modifications locales, commits, pushs, issues, PR, revues, mises à jour du

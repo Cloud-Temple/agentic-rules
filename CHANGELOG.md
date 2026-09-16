@@ -25,9 +25,14 @@ versionnement sémantique.
 - `PROJECT_RULES.md` : un refus d'accès rencontré pendant la recherche n'est pas
   une absence. Tant qu'il n'est pas élucidé, ne rien créer. Sans cette clause,
   un serveur qui refuse au lieu de répondre « absent » ramenait le doublon vide.
-- `PROJECT_RULES.md` : la correction de `memory.live.server` est un changement de
-  configuration qui modifie l'exécution ; elle passe par une branche et une PR,
-  jamais par un commit direct.
+- `PROJECT_RULES.md` : un identifiant trouvé sur un seul serveur mais dont la
+  description ou le propriétaire désigne un autre projet est une collision, pas
+  l'espace cherché. L'agent arrête et signale, au lieu d'adopter la mémoire d'un
+  tiers.
+- `PROJECT_RULES.md` : la correction de `memory.live.server` désigne où vivent les
+  données persistées du projet. Elle relève de la dernière ligne du tableau de
+  risque de `WORKFLOW_ENGINEERING.md` et passe par une PR dédiée, jamais par un
+  commit direct ni mêlée à la branche d'une autre tâche.
 - `project.config.example.yml` : le commentaire de `memory.live.server` dit ce
   que la clé désigne réellement, la cible de création et non le seul serveur
   consulté.
