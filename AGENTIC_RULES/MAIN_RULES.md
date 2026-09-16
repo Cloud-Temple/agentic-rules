@@ -89,8 +89,8 @@ charger le contexte avant de reprendre. Les autorisations et possibilités de
 préparation locale décrites ailleurs ne contournent jamais ce prérequis.
 
 Ce remède vaut pour les trois premières causes. La quatrième n'en a pas : quand
-l'espace trouvé appartient à un autre projet, il n'y a ni accès à rétablir ni
-configuration à réparer dans la session. `memory.live.space_id` désigne le
+l'identité de l'espace trouvé désigne un autre projet, il n'y a ni accès à
+rétablir ni configuration à réparer dans la session. `memory.live.space_id` désigne le
 mauvais espace, et seule une personne peut corriger ce champ. Ne pas le modifier
 de sa propre initiative pour débloquer le démarrage. « Trouver l'espace du
 projet » dans `PROJECT_RULES.md` borne ce cas.
