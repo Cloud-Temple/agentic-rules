@@ -3,6 +3,44 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.1.0] - 2026-09-16
+
+### Ajouté
+
+- `PROJECT_RULES.md` : section « Espace mémoire absent ». Un dépôt qu'on vient
+  de mettre en conformité déclare un `space_id` qui n'existe pas encore. Les
+  règles n'avaient pas ce cas et le traitaient comme une panne, donc un arrêt
+  du travail, alors qu'il suffisait de créer l'espace. L'agent tente désormais
+  `space_create` une fois, avec l'identifiant exact de la configuration.
+
+### Modifié
+
+- `PROJECT_RULES.md` : « Mémoire absente ou en panne » interdisait toute
+  recréation après un refus d'accès. Cette interdiction visait le contournement
+  d'un refus, mais elle bloquait aussi le premier démarrage légitime. Elle
+  autorise maintenant la tentative unique décrite dans la nouvelle section, et
+  continue d'interdire le changement d'espace, l'élargissement des droits et
+  les réessais en boucle.
+
+### Pourquoi la création est sûre
+
+Le serveur rend le même refus d'accès pour un espace absent et pour un espace
+existant hors des droits du jeton. La lecture seule ne tranche pas, alors que
+`space_create` sur un espace existant rend `already_exists` sans rien écraser :
+la tentative sert de test autant que de remède.
+
+Le statut seul ne conclut pas. Sur un espace existant, le serveur répare l'accès
+du jeton qui l'a créé et l'annonce dans `creator_access_repair`, donc un
+`already_exists` peut être un démarrage normal. Une création peut à l'inverse
+porter `creator_access_pending` quand le droit n'a pas pu être écrit, et le
+serveur demande alors de rejouer le même appel. La règle impose de lire ces
+champs et borne l'ensemble à deux appels. Une réponse inclassable conduit à
+l'arrêt, et c'est la lecture suivie de la note de cadrage qui prouve l'accès.
+
+Les `rules` restent vides pour que le serveur applique sa structure par défaut :
+elles sont immuables après création. Un serveur sans modèle par défaut refuse
+l'appel, ce qui signale un défaut de configuration, pas un espace manquant.
+
 ## [1.0.0] - 2026-09-15
 
 Première version du corpus dans son dépôt dédié.
