@@ -30,7 +30,11 @@ versionnement sémantique.
   l'espace cherché. L'agent arrête, avec la portée d'un blocage mémoire mais sans
   son remède : ne rien créer, ne pas relancer la recherche, ne pas demander
   l'ouverture d'un accès à l'espace d'un tiers. Seule une personne peut corriger
-  `memory.live.space_id`.
+  `memory.live.space_id`. Quand description et propriétaire sont tous deux vides,
+  l'espace est retenu, mais l'agent dit qu'il n'a rien pu lire plutôt que de
+  laisser croire à une vérification concluante.
+- `MAIN_RULES.md` : la collision d'identifiant rejoint les causes d'arrêt
+  obligatoire du prérequis mémoire, qui se lisaient comme une liste fermée.
 - `PROJECT_RULES.md` : la correction de `memory.live.server` désigne où vivent les
   données persistées du projet. Elle relève de la dernière ligne du tableau de
   risque de `WORKFLOW_ENGINEERING.md` et passe par une PR dédiée, jamais par un
