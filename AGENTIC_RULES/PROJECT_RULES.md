@@ -77,10 +77,10 @@ Selon ce que la recherche établit :
    propriétaire, et les dire. S'ils désignent le projet, ou ne le contredisent
    pas, retenir ce serveur sans rien demander, même si ce n'est pas celui que
    `memory.live.server` déclare. S'ils désignent manifestement un autre projet,
-   ce n'est pas l'espace cherché mais une collision d'identifiant : **arrêter et
-   le signaler**. « Ne jamais substituer un espace personnel ou celui d'un autre
-   projet » vaut ici comme ailleurs, et un identifiant qui coïncide ne vaut pas
-   identité.
+   ce n'est pas l'espace cherché mais une collision d'identifiant : le signaler
+   et **appliquer « Mémoire absente ou en panne »**, qui définit la portée de cet
+   arrêt. « Ne jamais substituer un espace personnel ou celui d'un autre projet »
+   vaut ici comme ailleurs, et un identifiant qui coïncide ne vaut pas identité.
 3. Trouvé sur aucun serveur, sans refus d'accès en suspens : appliquer
    « Espace mémoire absent ». La création a lieu sur
    `<memory.live.server>`.
@@ -129,7 +129,8 @@ valide et tenir compte immédiatement de toute erreur ultérieure.
 ## Espace mémoire absent
 
 Cette section s'applique quand la recherche de « Trouver l'espace du projet »
-n'a rien trouvé sur aucun serveur. Un dépôt fraîchement mis en conformité
+n'a rien trouvé sur aucun serveur et qu'aucun refus d'accès ne reste en suspens.
+Un refus non élucidé interdit la création, quelle que soit la suite. Un dépôt fraîchement mis en conformité
 déclare un `memory.live.space_id` qui n'existe encore nulle part. Ce cas n'est
 pas une panne, et il ne doit pas arrêter le travail.
 
