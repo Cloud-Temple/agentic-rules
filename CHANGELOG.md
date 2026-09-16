@@ -3,6 +3,33 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.1.0] - 2026-09-16
+
+### Ajouté
+
+- `PROJECT_RULES.md` : section « Espace mémoire absent ». Un dépôt qu'on vient
+  de mettre en conformité déclare un `space_id` qui n'existe pas encore. Les
+  règles n'avaient pas ce cas et le traitaient comme une panne, donc un arrêt
+  du travail, alors qu'il suffisait de créer l'espace. L'agent tente désormais
+  `space_create` une fois, avec l'identifiant exact de la configuration.
+
+### Modifié
+
+- `PROJECT_RULES.md` : « Mémoire absente ou en panne » interdisait toute
+  recréation après un refus d'accès. Cette interdiction visait le contournement
+  d'un refus, mais elle bloquait aussi le premier démarrage légitime. Elle
+  autorise maintenant la tentative unique décrite dans la nouvelle section, et
+  continue d'interdire le changement d'espace, l'élargissement des droits et
+  les réessais en boucle.
+
+### Pourquoi la création est sûre
+
+Le serveur rend le même refus d'accès pour un espace absent et pour un espace
+existant hors des droits du jeton, donc la lecture seule ne permet pas de
+trancher. `space_create` sur un espace existant rend `already_exists` sans rien
+écraser. La tentative est donc à la fois le test et le remède : elle crée quand
+l'espace manque, et elle révèle un problème de droits quand il existe déjà.
+
 ## [1.0.0] - 2026-09-15
 
 Première version du corpus dans son dépôt dédié.

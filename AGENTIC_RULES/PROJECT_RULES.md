@@ -11,6 +11,8 @@ Les identifiants ne sont pas écrits dans ces règles. Ils sont lus dans
 valeur de cette clé dans ce fichier ; ne jamais appeler un service avec la
 notation littérale, une valeur vide, un `TO_FILL` ou un identifiant deviné.
 La copie de ces règles ne configure aucun serveur MCP et ne crée aucun espace.
+La création éventuelle de l'espace configuré a lieu au démarrage d'une session,
+selon « Espace mémoire absent ».
 
 | Usage | Serveur MCP | Identifiant |
 | --- | --- | --- |
@@ -58,9 +60,35 @@ protocole restent obligatoires dans tous les cas.
 
 Lors de l'installation, vérifier l'écriture avec une première note utile de
 cadrage du projet, puis la relire. Une banque initialement vide est acceptable
-si l'espace existe, est accessible et si ce contexte initial est enregistré.
+si l'espace est accessible et si ce contexte initial est enregistré. Un espace
+qui n'existe pas encore relève de la section « Espace mémoire absent ».
 Ne pas créer de notes de test à chaque session ; réutiliser une preuve d'accès
 valide et tenir compte immédiatement de toute erreur ultérieure.
+
+## Espace mémoire absent
+
+Un dépôt fraîchement mis en conformité déclare un `memory.live.space_id` qui
+n'existe pas encore sur le serveur. Ce cas n'est pas une panne, et il ne doit
+pas arrêter le travail.
+
+Le serveur ne distingue pas un espace absent d'un espace existant hors des
+droits du jeton : les deux rendent le même refus d'accès. C'est la tentative de
+création qui lève l'ambiguïté, parce qu'elle n'écrase jamais un espace existant.
+
+Quand l'espace configuré n'est pas accessible :
+
+1. Tenter `space_create` **une seule fois**, avec l'identifiant **exact** de
+   `memory.live.space_id` et une description tirée du projet. Ne jamais inventer
+   un identifiant, ni le dériver, ni y ajouter un suffixe : il est renseigné par
+   une personne.
+2. Si la création rend « existe déjà », l'espace existe et le jeton courant n'y
+   a pas droit. **Arrêter** et demander l'ouverture de l'accès. Ne pas contourner
+   en créant une variante de l'identifiant.
+3. Si la création aboutit, poursuivre le démarrage normal, en écrivant la note
+   de cadrage prévue plus haut et en la relisant.
+4. Si la création échoue pour un autre motif, appliquer la section suivante.
+
+Cette création ne porte que sur l'espace configuré.
 
 ## Mémoire absente ou en panne
 
@@ -75,8 +103,9 @@ vérifier la connectivité et les accès au service déclaré, corriger sa confi
 d'accès si demandé, puis vérifier une écriture utile et sa relecture. Aucune
 édition de code métier, opération Git/GitHub ou action de livraison ne relève
 de cette exception. Un refus d'accès n'est pas la preuve d'un espace inexistant :
-ne pas le recréer, changer d'espace, élargir les droits ou réessayer en boucle.
-Si une intervention externe est nécessaire, l'indiquer.
+la seule action admise pour trancher est la tentative unique de création décrite
+en « Espace mémoire absent ». Ne pas changer d'espace, élargir les droits ni
+réessayer en boucle. Si une intervention externe est nécessaire, l'indiquer.
 
 Après rétablissement, recharger le contexte et les notes utiles avant de
 reprendre. Après un timeout d'écriture, vérifier si la note existe déjà avant
