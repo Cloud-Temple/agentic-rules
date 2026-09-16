@@ -3,6 +3,57 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.3.0] - 2026-09-16
+
+### Modifié
+
+- `PROJECT_RULES.md` : nouvelle section « Trouver l'espace du projet ».
+  L'espace est cherché sur tous les serveurs Live Memory de la session, pas
+  seulement sur celui que `memory.live.server` déclare. Trouvé sur plusieurs,
+  l'utilisateur choisit ; sur un seul, l'agent le retient sans demander ; sur
+  aucun, la création bornée existante s'applique. Le serveur retenu devient le
+  serveur effectif que cible toute la session, et l'agent corrige
+  `memory.live.server` s'il diffère.
+- `PROJECT_RULES.md` : les renvois au serveur déclaré visent désormais le serveur
+  effectif, dans la table des espaces, le ciblage des appels, l'étape 1 du
+  démarrage et la section « Mémoire absente ou en panne ».
+- `MAIN_RULES.md` : la section d'autonomie distingue autoriser une action et
+  désigner son objet. Le merge reste le seul point d'autorisation humaine. Le
+  choix entre deux espaces homonymes est une désignation, nommée comme seule
+  exception au principe « continuer le travail indépendant de la réponse »,
+  parce qu'aucun travail n'est indépendant de la mémoire qui sera chargée.
+- `PROJECT_RULES.md` : un refus d'accès rencontré pendant la recherche n'est pas
+  une absence. Tant qu'il n'est pas élucidé, ne rien créer. Sans cette clause,
+  un serveur qui refuse au lieu de répondre « absent » ramenait le doublon vide.
+- `PROJECT_RULES.md` : un identifiant trouvé sur un seul serveur mais dont la
+  description ou le propriétaire désigne un autre projet est une collision, pas
+  l'espace cherché. L'agent arrête, avec la portée d'un blocage mémoire mais sans
+  son remède : ne rien créer, ne pas relancer la recherche, ne pas demander
+  l'ouverture d'un accès à l'espace d'un tiers. Seule une personne peut corriger
+  `memory.live.space_id`. Quand description et propriétaire sont tous deux vides,
+  l'espace est retenu, mais l'agent dit qu'il n'a rien pu lire plutôt que de
+  laisser croire à une vérification concluante.
+- `MAIN_RULES.md` : la collision d'identifiant rejoint les causes d'arrêt
+  obligatoire du prérequis mémoire, qui se lisaient comme une liste fermée. Le
+  paragraphe de remède qui suit dit maintenant qu'il ne vaut que pour les trois
+  premières : une collision n'a ni accès à rétablir ni configuration à réparer
+  dans la session, et l'agent ne modifie pas `memory.live.space_id` de lui-même.
+- `PROJECT_RULES.md` : la correction de `memory.live.server` désigne où vivent les
+  données persistées du projet. Elle relève de la dernière ligne du tableau de
+  risque de `WORKFLOW_ENGINEERING.md` et passe par une PR dédiée, jamais par un
+  commit direct ni mêlée à la branche d'une autre tâche.
+- `project.config.example.yml` : le commentaire de `memory.live.server` dit ce
+  que la clé désigne réellement, la cible de création et non le seul serveur
+  consulté.
+
+### Pourquoi
+
+Un dépôt peut déclarer un espace qui vit sur l'autre serveur. La règle
+précédente interdisait de regarder ailleurs, puis prescrivait la création : elle
+produisait un doublon vide pendant que la mémoire réelle restait sur le serveur
+non consulté, sans qu'aucune erreur ne le signale. Le cas est réel dans la
+flotte.
+
 ## [1.2.0] - 2026-09-16
 
 ### Ajouté
