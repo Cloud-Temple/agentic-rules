@@ -34,7 +34,10 @@ versionnement sémantique.
   l'espace est retenu, mais l'agent dit qu'il n'a rien pu lire plutôt que de
   laisser croire à une vérification concluante.
 - `MAIN_RULES.md` : la collision d'identifiant rejoint les causes d'arrêt
-  obligatoire du prérequis mémoire, qui se lisaient comme une liste fermée.
+  obligatoire du prérequis mémoire, qui se lisaient comme une liste fermée. Le
+  paragraphe de remède qui suit dit maintenant qu'il ne vaut que pour les trois
+  premières : une collision n'a ni accès à rétablir ni configuration à réparer
+  dans la session, et l'agent ne modifie pas `memory.live.space_id` de lui-même.
 - `PROJECT_RULES.md` : la correction de `memory.live.server` désigne où vivent les
   données persistées du projet. Elle relève de la dernière ligne du tableau de
   risque de `WORKFLOW_ENGINEERING.md` et passe par une PR dédiée, jamais par un
