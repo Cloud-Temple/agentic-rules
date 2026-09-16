@@ -213,14 +213,18 @@ set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
 # sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
 # la valeur de la mauvaise section, en silence. Un leurre placé AVANT la section
 # project le démontre : une lecture aveugle prendrait son chemin, qui est mort.
+# Deux leurres, un de chaque côté de la vraie clé. Un seul ne prouverait rien :
+# placé avant, la règle « dernière occurrence gagne » retombe sur la bonne
+# valeur par coïncidence, et une lecture aveugle à la section passerait le test.
 cp "$T/AGENTIC_RULES/project.config.yml" "$WORK/cfg.bak"
-printf 'leurre:\n  instructions_file: DESIGN/N-EXISTE-PAS.md\n\n%s' \
-  "$(cat "$T/AGENTIC_RULES/project.config.yml")" > "$WORK/cfg.tmp"
+{ printf 'leurre_avant:\n  instructions_file: DESIGN/AVANT-N-EXISTE-PAS.md\n\n'
+  cat "$T/AGENTIC_RULES/project.config.yml"
+  printf '\nleurre_apres:\n  instructions_file: DESIGN/APRES-N-EXISTE-PAS.md\n'
+} > "$WORK/cfg.tmp"
 mv "$WORK/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
-grep -c 'instructions_file' "$T/AGENTIC_RULES/project.config.yml" | grep -qx 2 \
-  && ok "le leurre et la vraie clé coexistent" || ko "le leurre et la vraie clé coexistent"
+check "trois clés homonymes coexistent" "$(grep -c 'instructions_file' "$T/AGENTIC_RULES/project.config.yml")" "3"
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
-check "une clé homonyme hors section est ignorée" "$rc" "0"
+check "les clés homonymes hors section sont ignorées des deux côtés" "$rc" "0"
 cp "$WORK/cfg.bak" "$T/AGENTIC_RULES/project.config.yml"
 
 # Clé dupliquée dans la MÊME section : les lecteurs YAML gardent la dernière.

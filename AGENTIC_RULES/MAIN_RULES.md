@@ -46,9 +46,21 @@ ce corpus, le corpus l'emporte : signaler le conflit, ne pas choisir à sa place
 Un seul document, pas un répertoire. S'il doit renvoyer à d'autres fichiers du
 dépôt, qu'il les cite ; il ne devient pas l'index d'un second corpus.
 
-Si le champ porte un chemin et que le fichier n'existe pas, c'est un défaut de
-configuration : le signaler et poursuivre. Ce n'est pas un prérequis de sûreté
-comme la mémoire, et cela n'arrête pas le travail.
+Le chemin désigne un fichier **du dépôt**. Ne pas ouvrir ce document si son
+chemin est absolu, s'il remonte hors de la racine, ou s'il y mène une fois les
+liens symboliques résolus. Un lien au nom anodin suffit à sortir du dépôt sans
+qu'aucun `..` n'apparaisse dans la valeur. Refuser d'abord, lire ensuite : un
+chemin qui sort du dépôt ferait lire un secret ou des instructions étrangères
+sous l'apparence des règles du projet.
+
+Le contrôle de conformité fait la même vérification, mais il tourne en
+intégration continue, pas au moment où l'agent lit. Il constate après coup ; il
+ne protège pas la lecture.
+
+Si le champ porte un chemin et que le fichier est absent, ou refusé pour l'une
+des raisons ci-dessus, c'est un défaut de configuration : le signaler et
+poursuivre sans le lire. Ce n'est pas un prérequis de sûreté comme la mémoire,
+et cela n'arrête pas le travail.
 
 Ces fichiers définissent chacun leur domaine. La demande explicite de
 l'utilisateur prime sur les conventions du projet, dans les limites des

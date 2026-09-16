@@ -60,10 +60,24 @@ aucun test, et qu'une clé dupliquée dans une même section retenait la premiè
 valeur là où tout lecteur YAML garde la dernière. Les deux sont corrigés et
 couverts.
 
-Le plafond anti-boucle de `resolve_path` reste sans test, et c'est écrit dans le
-code : le seul appelant vérifie `-f` avant d'appeler, or le noyau rend déjà
-ELOOP au-delà de sa propre limite. Forcer cet état dans un test serait du
-théâtre. Le plafond reste pour le jour où la fonction servira ailleurs.
+Une troisième passe a trouvé le plus important. Tous ces contrôles vivent dans
+`agentic-rules.sh`, que la CI exécute et que l'agent n'exécute jamais. Le texte
+des règles, lui, disait de lire le document désigné sans dire de refuser un
+chemin dangereux. La protection ne valait donc qu'après coup, et pas du tout
+sur une configuration modifiée localement. `MAIN_RULES.md` porte maintenant la
+règle côté agent : ne pas ouvrir le document si le chemin est absolu, remonte
+hors de la racine, ou y mène une fois les liens résolus.
+
+La même passe a montré qu'un de mes tests était complaisant. Le leurre de clé
+homonyme était placé avant la vraie section, si bien qu'une lecture aveugle à la
+section retombait sur la bonne valeur par coïncidence. Il y a maintenant un
+leurre de chaque côté.
+
+Et `resolve_path` rendait un succès quand son plafond était atteint, donc un
+chemin à demi résolu, qui peut se trouver dans le dépôt alors que la cible réelle
+est dehors. Elle rend un échec. Ce plafond et cet échec restent sans test, et le
+code le dit : le seul appelant vérifie `-f` avant d'appeler, or le noyau rend
+déjà ELOOP au-delà de sa propre limite. Forcer cet état serait du théâtre.
 
 ### Ce que le pointeur ne doit pas devenir
 

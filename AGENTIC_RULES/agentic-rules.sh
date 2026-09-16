@@ -171,11 +171,13 @@ config_value() {
 # `readlink -f` qui n'existe pas partout. Rend un échec si le répertoire
 # conteneur n'existe pas.
 #
-# Le plafond de 40 itérations est une défense en profondeur qu'aucun test
-# n'atteint, et c'est assumé : le seul appelant vérifie `-f` avant d'appeler,
-# or le noyau rend déjà ELOOP au-delà de sa propre limite de liens. Fabriquer
-# un test qui force cet état serait du théâtre. Le plafond reste parce que la
-# fonction peut être appelée ailleurs un jour.
+# Le plafond de 40 itérations et l'échec qui le suit sont une défense en
+# profondeur qu'aucun test n'atteint, et c'est assumé : le seul appelant vérifie
+# `-f` avant d'appeler, or le noyau rend déjà ELOOP au-delà de sa propre limite
+# de liens. Fabriquer un test qui force cet état serait du théâtre. Les deux
+# restent parce que la fonction peut être appelée ailleurs un jour, et parce
+# qu'un chemin à demi résolu se trouve parfois dans le dépôt alors que la cible
+# réelle est dehors.
 resolve_path() {
   local p="$1" t d b n=0
   while [ -L "$p" ] && [ "$n" -lt 40 ]; do
@@ -186,6 +188,11 @@ resolve_path() {
     esac
     n=$((n + 1))
   done
+  # Plafond atteint sans avoir fini de dérouler : rendre un échec, jamais un
+  # chemin partiellement résolu. Un chemin à mi-parcours peut être à l'intérieur
+  # du dépôt alors que la cible réelle est dehors, et l'appelant conclurait à
+  # une conformité qui n'existe pas.
+  [ -L "$p" ] && return 1
   d="$(dirname "$p")"; b="$(basename "$p")"
   d="$(cd "$d" 2>/dev/null && pwd -P)" || return 1
   printf '%s/%s\n' "$d" "$b"
