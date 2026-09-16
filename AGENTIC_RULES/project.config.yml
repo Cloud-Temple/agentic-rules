@@ -19,4 +19,4 @@ memory:
     memory_id: disabled
 
 review:
-  reviewer_provider: codex
+  reviewer_provider: claude
