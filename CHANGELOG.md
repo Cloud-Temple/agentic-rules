@@ -52,6 +52,19 @@ chemin réel, liens compris, et vérifie qu'il reste sous la racine.
 `RELEASE-1.0..1.md`. Le motif n'encadre plus que le segment `..`, comme le fait
 déjà `read_manifest` dans le même script.
 
+Une seconde passe a trouvé que le message d'échec mentait sur ce qu'il avait
+rencontré : un répertoire ou un lien cassé étaient annoncés comme « n'existe
+pas ». Le verdict était bon, le diagnostic faux. Trois messages distincts
+maintenant. Elle a aussi trouvé qu'un échec de `readlink` n'était exercé par
+aucun test, et qu'une clé dupliquée dans une même section retenait la première
+valeur là où tout lecteur YAML garde la dernière. Les deux sont corrigés et
+couverts.
+
+Le plafond anti-boucle de `resolve_path` reste sans test, et c'est écrit dans le
+code : le seul appelant vérifie `-f` avant d'appeler, or le noyau rend déjà
+ELOOP au-delà de sa propre limite. Forcer cet état dans un test serait du
+théâtre. Le plafond reste pour le jour où la fonction servira ailleurs.
+
 ### Ce que le pointeur ne doit pas devenir
 
 Le document désigné décrit le projet, jamais la méthode. Il ne définit ni règle

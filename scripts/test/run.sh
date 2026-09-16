@@ -142,11 +142,32 @@ check "le même pointeur passe une fois le fichier créé" "$rc" "0"
 grep -q "DESIGN/INSTRUCTIONS.md" "$T/AGENTIC_RULES/.provenance" \
   && ko "le document désigné ne doit pas être empreinté" || ok "le document désigné reste hors empreinte"
 
-# Un répertoire n'est pas un document : la règle dit un seul fichier.
+# Un répertoire n'est pas un document : la règle dit un seul fichier. Le message
+# doit dire pourquoi, pas prétendre que la cible n'existe pas.
 rm "$T/DESIGN/INSTRUCTIONS.md"; mkdir -p "$T/DESIGN/INSTRUCTIONS.md"
-"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
 check "un répertoire ne vaut pas document" "$rc" "1"
+printf '%s' "$out" | grep -q "PAS UN FICHIER" && ok "le répertoire est diagnostiqué pour ce qu'il est" || ko "le répertoire est diagnostiqué pour ce qu'il est"
 rmdir "$T/DESIGN/INSTRUCTIONS.md"; printf 'instructions du projet\n' > "$T/DESIGN/INSTRUCTIONS.md"
+
+# Un lien cassé existe en tant que lien mais ne mène nulle part.
+ln -s "n-existe-pas.md" "$T/DESIGN/casse.md"
+set_config "$T" instructions_file "DESIGN/casse.md"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un lien cassé échoue" "$rc" "1"
+printf '%s' "$out" | grep -q "LIEN CASSE" && ok "le lien cassé est diagnostiqué" || ko "le lien cassé est diagnostiqué"
+rm "$T/DESIGN/casse.md"; set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# Si readlink échoue, le contrôle doit refuser au lieu de conclure au hasard.
+mkdir -p "$WORK/faux-outils"
+printf '#!/bin/sh\nexit 1\n' > "$WORK/faux-outils/readlink"
+chmod +x "$WORK/faux-outils/readlink"
+ln -s "INSTRUCTIONS.md" "$T/DESIGN/lien-interne.md"
+set_config "$T" instructions_file "DESIGN/lien-interne.md"
+out="$(PATH="$WORK/faux-outils:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un readlink en échec fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -q "CHEMIN IRRESOLU" && ok "l'échec de résolution est nommé" || ko "l'échec de résolution est nommé"
+rm "$T/DESIGN/lien-interne.md"; set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
 
 # Un chemin qui sort du dépôt ferait lire un fichier arbitraire du poste. Le
 # cas dangereux est celui où la cible EXISTE : sans la garde, le contrôle passe
@@ -201,6 +222,16 @@ grep -c 'instructions_file' "$T/AGENTIC_RULES/project.config.yml" | grep -qx 2 \
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "une clé homonyme hors section est ignorée" "$rc" "0"
 cp "$WORK/cfg.bak" "$T/AGENTIC_RULES/project.config.yml"
+
+# Clé dupliquée dans la MÊME section : les lecteurs YAML gardent la dernière.
+# Une configuration pareille est malformée, mais le contrôle ne doit pas se
+# fonder sur une valeur que personne d'autre ne lirait.
+cp "$T/AGENTIC_RULES/project.config.yml" "$WORK/cfg.bak2"
+sed -i'' -e 's|^\([[:space:]]*\)instructions_file: DESIGN/INSTRUCTIONS.md|\1instructions_file: DESIGN/N-EXISTE-PAS.md\n\1instructions_file: DESIGN/INSTRUCTIONS.md|' \
+  "$T/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "une clé dupliquée retient la dernière valeur" "$rc" "0"
+cp "$WORK/cfg.bak2" "$T/AGENTIC_RULES/project.config.yml"
 
 # Une configuration en schéma 1 n'a pas la clé. Son absence ne bloque rien,
 # sinon la montée de version casserait les dépôts déjà installés.
