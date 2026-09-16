@@ -3,6 +3,33 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.4.0] - 2026-09-17
+
+### Modifié
+
+- `REVIEWERS.md` : l'obligation `reasoning_effort: "none"` disparaît de la ligne
+  `codex`. Elle était justifiée par un HTTP 400 dès que des function tools sont
+  présents ; la mesure montre que des appels `codex exec` en `medium` et en
+  `xhigh`, serveurs MCP chargés, passent sans erreur. La contrainte valait peut-
+  être pour l'API directe, pas pour la CLI, qui est la façon dont le corpus fait
+  réellement relire.
+- `REVIEWERS.md` : le tableau annonçait ne déclarer aucun niveau de raisonnement
+  alors que la colonne de `codex` en imposait un. La contradiction est levée, et
+  le tableau dit maintenant qu'il ne porte aucune contrainte propre à un
+  fournisseur.
+
+### Ajouté
+
+- `REVIEWERS.md` : ne pas forcer le niveau de raisonnement du relecteur. Un
+  niveau bas rend des verdicts sans que les règles du dépôt aient été ouvertes,
+  et parfois un blocage annoncé sans qu'un appel ait été tenté, indiscernable
+  d'un vrai blocage. Une contrainte technique réelle se nomme avec son périmètre
+  au lieu d'être généralisée.
+- `REVIEWERS.md` : nommer le serveur mémoire et l'espace dans le dossier de
+  revue quand plusieurs serveurs exposent des outils homonymes. Sans cette
+  précision, le relecteur adresse le mauvais serveur et rend « accès refusé »,
+  une erreur d'adressage qui se lit comme une panne.
+
 ## [1.3.0] - 2026-09-16
 
 ### Modifié
