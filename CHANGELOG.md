@@ -46,10 +46,13 @@ versionnement sémantique.
   exécuter la branche de « Trouver l'espace du projet » qui demande à
   l'utilisateur de choisir ; lever l'ambiguïté en amont l'en dispense.
 - `REVIEWERS.md` : la lecture seule du relecteur porte aussi sur la mémoire. Le
-  corpus le définissait en lecture seule tout en lui opposant un prérequis exigeant
-  la lecture et l'écriture. Il constate sa lecture, n'écrit pas, et la moitié
-  écriture tient à la preuve d'accès existante que `PROJECT_RULES.md` admet déjà
-  de réutiliser.
+  corpus le définissait en lecture seule tout en lui opposant un prérequis
+  exigeant la lecture et l'écriture. Il constate les deux moitiés sans écrire :
+  l'appel d'identité du serveur rend les permissions du jeton et ses espaces
+  autorisés, donc le droit d'écriture s'y lit. Il rend compte d'un droit déclaré,
+  pas d'une écriture exécutée. L'issue #2 affirmait une vérification « en lecture
+  et en écriture » alors que les trois appels qu'elle donnait ne lisent que ;
+  cette version lève l'écart au lieu de le reconduire.
 
 ## [1.3.0] - 2026-09-16
 

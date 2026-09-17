@@ -44,13 +44,17 @@ dépôts ne produisent pas des verdicts issus de configurations différentes.
   par son nom, et qu'il lui revient de constater son propre accès. Ne jamais l'en
   dispenser au motif que la session qui délègue l'a déjà fait : ce serait lui
   demander d'ignorer une règle pour pouvoir juger si elle est tenue.
-- **La lecture seule du relecteur porte aussi sur la mémoire.** Il constate son
-  accès en lecture, par son identité auprès du serveur puis la lecture de
-  l'espace du projet, et il n'écrit aucune note. Le prérequis de `MAIN_RULES.md`
-  demande un accès en lecture et en écriture ; la moitié écriture est établie par
-  la preuve d'accès existante, que `PROJECT_RULES.md` admet de réutiliser plutôt
-  que de créer une note de vérification à chaque session. Une revue n'a pas à
-  laisser de trace dans la banque du projet : son verdict revient par le pilote.
+- **La lecture seule du relecteur porte aussi sur la mémoire.** Il n'écrit aucune
+  note : une revue n'a pas à laisser de trace dans la banque du projet, et son
+  verdict revient par le pilote. Il constate pourtant lui-même les deux moitiés
+  du prérequis de `MAIN_RULES.md`, sans écrire, parce que le serveur les déclare.
+  L'appel d'identité rend les permissions du jeton et la liste des espaces
+  autorisés ; sur Live Memory c'est aujourd'hui `system_whoami`, à vérifier dans
+  le schéma réellement exposé. Y lire `write` et l'espace du projet établit le
+  droit d'écriture, et lire l'espace établit l'accès en lecture. Rendre compte de
+  ce qui a été constaté pour ce qu'il est : un droit déclaré par le serveur, non
+  une écriture exécutée. Un relecteur ne se dispense d'aucune vérification, il en
+  emploie une qui n'écrit pas.
 - **Nommer le serveur mémoire et l'espace** parmi les éléments de contexte
   fournis au relecteur, quand plusieurs serveurs exposent des outils homonymes.
   Le relecteur travaille en session non interactive : il ne peut pas exécuter la
