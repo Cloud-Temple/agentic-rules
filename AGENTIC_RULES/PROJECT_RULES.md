@@ -145,9 +145,10 @@ pas une panne, et il ne doit pas arrêter le travail.
 
 Une session de revue indépendante ne crée pas cet espace : elle n'écrit jamais,
 et `MAIN_RULES.md` nomme cette exception. Pour elle seule, un espace introuvable
-sur tous les serveurs arrête la revue avec la portée d'un blocage mémoire, sans
-le remède décrit ci-dessous : elle signale l'absence et ne rend pas de verdict.
-La création revient à une session ordinaire du projet.
+sur tous les serveurs arrête la revue avec la portée d'un blocage mémoire. Elle
+n'en partage le remède d'aucune section, ni celui-ci ni celui de « Mémoire
+absente ou en panne » : tous deux supposent une écriture. Elle signale l'absence
+et s'arrête sans rendre de verdict. La création revient à une session ordinaire.
 
 Le serveur ne distingue pas un espace absent d'un espace existant hors des
 droits du jeton : les deux rendent le même refus d'accès. C'est la tentative de
@@ -206,6 +207,12 @@ les seules actions admises pour trancher sont la recherche sur les autres
 serveurs décrite en « Trouver l'espace du projet », puis la tentative de création
 bornée décrite en « Espace mémoire absent ». Ne pas changer d'espace, élargir les
 droits ni réessayer en boucle. Si une intervention externe est nécessaire, l'indiquer.
+
+Une session de revue indépendante ne mène que celles de ces actions qui
+n'écrivent rien. Elle ne corrige aucune configuration, ne tente aucune création
+et ne vérifie aucune écriture, quelle que soit la cause du blocage, y compris un
+refus d'accès non élucidé. Elle le signale et s'arrête sans rendre de verdict :
+voir l'exception nommée dans `MAIN_RULES.md`.
 
 Après rétablissement, recharger le contexte et les notes utiles avant de
 reprendre. Après un timeout d'écriture, vérifier si la note existe déjà avant
