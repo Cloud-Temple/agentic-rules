@@ -38,14 +38,16 @@ versionnement sémantique.
   encore 41 sur 241 : une limite choisie à la main se fait rattraper par la
   croissance, c'est la comparaison qui protège. Signalée en #12.
 - `WORKFLOW_ENGINEERING.md` : une vérification ne vaut que ce que son moment
-  garantit. Sur une ressource que d'autres écrivent, relire juste après avoir
-  écrit ne prouve que l'instant. Relire une seconde fois avant de tenir la tâche
-  pour finie, à la fin du lot quand il y en a un et sinon avant de conclure : une
-  écriture isolée n'est pas moins exposée, elle offre seulement moins d'occasions
-  de s'en apercevoir. Second volet de #12, documenté par l'incident
-  `mcp-agent#54` : un statut posé puis vérifié est repassé à sa valeur précédente,
-  sans qu'aucune erreur soit rendue. Un jeton partagé rend cette concurrence
-  invisible, toutes les écritures portant le même acteur dans l'audit.
+  garantit. Relire juste après avoir écrit ne prouve que l'instant. Relire une
+  seconde fois avant de tenir la tâche pour finie, une fois les autres mutations
+  passées. La règle nomme sa propre limite : cette seconde lecture ne protège que
+  s'il s'est passé quelque chose entre les deux, et une mutation seule suivie de
+  rien reste exposée. Second volet de #12, documenté par l'incident
+  `mcp-agent#54` : un statut posé puis vérifié est retrouvé à sa valeur
+  précédente après d'autres mutations sur le même board, sans qu'aucune erreur
+  soit rendue. La cause n'y est pas établie ; l'hypothèse principale de l'issue
+  est une automation de la plateforme, et le texte ne présente donc pas la
+  concurrence entre écrivains comme le mécanisme.
 
 ### Modifié
 
@@ -56,7 +58,8 @@ versionnement sémantique.
   vérification paginent toutes les deux et peuvent être tronquées de la même
   façon, auquel cas la vérification confirme la troncature. Renvoi vers la règle
   générale plutôt qu'une seconde formulation. Un board est par ailleurs écrit par
-  plusieurs mains : la vérification se relit une seconde fois avant de conclure.
+  plusieurs mains, et ses automations déplacent des champs : les objets touchés se
+  relisent une seconde fois en fin de lot.
 
 ## [1.5.0] - 2026-09-17
 

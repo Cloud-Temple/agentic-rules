@@ -119,13 +119,15 @@ côté sans que personne l'ait décidé.
   ne s'en conclut, ni diagnostic, ni vérification après écriture. Une limite
   choisie à la main parce qu'elle paraissait large se fait rattraper par la
   croissance : c'est la comparaison qui protège, pas le nombre.
-- Une vérification ne vaut que ce que son moment garantit. Sur une ressource que
-  d'autres écrivent aussi, relire juste après avoir écrit ne prouve que l'instant :
-  la valeur peut repartir en arrière ensuite, sans qu'aucune erreur soit rendue.
-  Relire une seconde fois avant de tenir la tâche pour finie : à la fin du lot
-  quand il y en a un, et sinon avant de conclure. Une écriture isolée n'est pas
-  moins exposée qu'un lot, elle offre seulement moins d'occasions de s'en
-  apercevoir. Un jeton partagé rend cette concurrence invisible : dans le journal
+- Une vérification ne vaut que ce que son moment garantit. Relire juste après
+  avoir écrit ne prouve que l'instant : un effet différé de la plateforme, une
+  automation ou une autre écriture peut déplacer la valeur ensuite, sans qu'aucune
+  erreur soit rendue. Relire une seconde fois avant de tenir la tâche pour finie,
+  une fois les autres mutations passées. Cette seconde lecture ne protège que s'il
+  s'est passé quelque chose entre les deux : enchaînée à la première, elle rend le
+  même résultat. Une mutation seule, suivie de rien, reste donc exposée ; le dire
+  vaut mieux que cocher une case. Sur une ressource écrite par plusieurs mains
+  sous un même jeton, la concurrence est en plus invisible : dans le journal
   d'audit, toutes les écritures portent le même acteur.
 - Distinguer une valeur non renseignée d'une valeur explicitement demandée.
   Ne pas laisser le mapping ou la sérialisation décider d'une suppression sur
