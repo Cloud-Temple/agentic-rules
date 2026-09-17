@@ -7,16 +7,16 @@ versionnement sémantique.
 
 ### Ajouté
 
-- `WORKFLOW_ENGINEERING.md` : le code qui compte va dans un fichier. Une commande
-  d'inspection jetable reste une commande, et une vérification ponctuelle aussi,
-  mais du code qui sera rejoué ou qui modifie un état n'a rien à faire dans un
-  bloc de texte passé au shell : il n'apparaît dans aucun diff, ne se teste pas
-  séparément et échappe aux contrôles du tableau de risque. Second motif,
-  indépendant du
-  premier et venu d'un autre dépôt : une commande longue se fait tronquer, et une
-  commande tronquée échoue à moitié ou réussit à moitié. Les deux règles étaient
-  tombées en démontant les `.clinerules`, l'une dans `mcp-alerts` justifiée par la
-  relecture, l'autre dans `mcp-agent` justifiée par la fiabilité. Signalées en #8.
+- `WORKFLOW_ENGINEERING.md` : le code qui compte va dans un fichier. Une
+  commande d'inspection jetable reste une commande, et une vérification
+  ponctuelle aussi, mais du code qui sera rejoué ou qui modifie un état n'a rien
+  à faire dans un bloc de texte passé au shell : il n'apparaît dans aucun diff,
+  ne se teste pas séparément et échappe aux contrôles du tableau de risque.
+  Second motif, indépendant du premier et venu d'un autre dépôt : une commande
+  longue se fait tronquer, et une commande tronquée échoue à moitié ou réussit à
+  moitié. Les deux règles étaient tombées en démontant les `.clinerules`, l'une
+  dans `mcp-alerts` justifiée par la relecture, l'autre dans `mcp-agent`
+  justifiée par la fiabilité. Signalées en #8.
 - `WORKFLOW_ENGINEERING.md`, section « Réglages et publics » : une valeur qui
   gouverne un comportement en exploitation se règle, une constante qui définit un
   format reste dans le code. La frontière n'est pas « est-ce un nombre », c'est de
