@@ -3,6 +3,49 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.7.0] - 2026-09-17
+
+### Corrigé
+
+- `agentic-rules.sh` : un fichier dont le nom contient un saut de ligne
+  échappait au contrôle d'ajout local. Le défaut avait deux moitiés, et ne
+  corriger que la première l'aurait laissé exploitable. L'énumération découpait
+  sur `\n`, si bien que le seul fichier `MAIN_RULES.md<LF>PROJECT_RULES.md`
+  rendait deux noms tous deux présents au corpus ; elle se termine désormais sur
+  `\0`, accepté par GNU comme par BSD. Mais la comparaison passait aussi par
+  `grep -x`, où un motif contenant un saut de ligne vaut plusieurs motifs
+  alternatifs : elle se fait maintenant par égalité de chaînes, terme à terme.
+  Le tri disparaît plutôt que d'appeler `sort -z`, absent de BSD, l'étape n'en
+  dépendant pas. Le diagnostic rend les caractères de contrôle visibles, sinon
+  un tel nom étalait le message sur plusieurs lignes. Signalé en #18, trouvé par
+  la revue indépendante de #17.
+
+  Gravité mesurée : ce n'est pas une maladresse possible mais un contournement
+  qui demande de fabriquer le nom exprès. Il fonctionnait dans les dix dépôts
+  porteurs du corpus et dans les trois PR d'installation en attente.
+
+- `scripts/check-source.sh` portait le même défaut, en pire, et rien en aval ne
+  le rattrapait : c'est lui qui décide de ce qui part en distribution. Un fichier
+  nommé `.provenance<LF>project.config.yml` traversait le contrôle sans rien
+  déclencher, le dépôt source restant `conforme`. Un nom finissant par `.md`
+  était refusé, mais par accident, par le glob d'un autre contrôle, et le
+  diagnostic nommait alors un fichier qui n'existe pas. Mêmes corrections que
+  dans le script distribué, plus le remplacement de `$(ls AGENTIC_RULES/*.md)`
+  par un glob, la substitution de commande découpant sur les sauts de ligne.
+
+- Le contrôle du dépôt source n'était exercé par aucun test. Il l'est désormais
+  sur une copie jetable, avec un parasite ordinaire et un parasite à nom
+  fabriqué. Cette copie se construit depuis le MANIFEST, fichier par fichier :
+  recopier le répertoire y faisait entrer ce qui traîne dans l'arbre de travail,
+  et un `.DS_Store` posé par le Finder faisait tomber deux assertions qui ne
+  parlent pas de lui. Le contrôle qui attrape une règle ajoutée sans sa ligne au
+  MANIFEST devenait de ce fait inexerçable, la copie ne contenant par
+  construction que des fichiers manifestés : le cas s'injecte donc après coup,
+  en amputant le MANIFEST copié. Deux entrées y sont amputées tour à tour, une
+  sous `AGENTIC_RULES/` pour le scénario réel d'une règle ajoutée sans sa ligne,
+  une à la racine parce qu'elle seule met ce contrôle hors d'atteinte de celui
+  des fichiers parasites et rend donc le refus imputable à lui seul.
+
 ## [1.6.0] - 2026-09-17
 
 ### Ajouté

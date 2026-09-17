@@ -277,6 +277,35 @@ printf '%s' "$out" | grep -q "AJOUT LOCAL" \
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "la cible reste conforme une fois le find rendu" "$rc" "0"
 
+# Un nom de fichier peut contenir un saut de ligne. Découpée sur `\n`,
+# l'énumération rendait deux noms au lieu d'un, tous deux au corpus, et le
+# fichier passait : un contournement délibéré du contrôle, pas une maladresse.
+# Le nom est fabriqué pour que ses deux moitiés soient l'une et l'autre
+# autorisées, sans quoi le test passerait pour la mauvaise raison.
+sournois="$T/AGENTIC_RULES/$(printf 'MAIN_RULES.md\nPROJECT_RULES.md')"
+printf 'regle clandestine\n' > "$sournois"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un nom contenant un saut de ligne fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -qF 'AJOUT LOCAL AGENTIC_RULES/MAIN_RULES.md\nPROJECT_RULES.md' \
+  && ok "le nom clandestin est nommé d'un seul tenant" || ko "le nom clandestin est nommé d'un seul tenant"
+# Compter les lignes, pas seulement en trouver une : un diagnostic scindé en
+# deux signalerait le même fichier deux fois sous deux noms qui n'existent pas.
+n="$(printf '%s' "$out" | grep -c 'AJOUT LOCAL')"
+check "le nom vaut un seul ajout, pas deux" "$n" "1"
+rm "$sournois"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "la cible redevient conforme une fois le nom retiré" "$rc" "0"
+
+# Les autres caractères de contrôle cassent l'affichage sans cacher le fichier.
+# La détection ne dépend pas d'eux, la lisibilité du diagnostic si.
+sournois="$T/AGENTIC_RULES/$(printf 'REGLE\tLOCALE.md')"
+printf 'regle clandestine\n' > "$sournois"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "une tabulation dans le nom fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -qF 'AJOUT LOCAL AGENTIC_RULES/REGLE\tLOCALE.md' \
+  && ok "la tabulation est rendue visible" || ko "la tabulation est rendue visible"
+rm "$sournois"
+
 # La lecture doit tenir compte de la section. Le schéma réutilise déjà `server`
 # sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
 # la valeur de la mauvaise section, en silence. Un leurre placé AVANT la section
@@ -430,6 +459,94 @@ printf '%s' "$out" | grep -q "répertoire parent impossible" && ok "l'échec est
 [ -e "$T7/AGENTS.md" ] && ko "les fichiers déjà posés sont retirés" || ok "les fichiers déjà posés sont retirés"
 after_snap="$(snapshot "$T7")" || exit 2
 [ "$after_snap" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
+
+# Le contrôle du dépôt source n'était exercé par aucun test. C'est pourtant lui
+# qui décide de ce qui part en distribution : un fichier parasite qu'il laisse
+# passer est empreinté au tag suivant, puis propagé dans toute la flotte. Il
+# portait le même défaut que le script distribué, en pire, parce que rien en
+# aval ne le rattrape.
+#
+# La copie se construit depuis le MANIFEST, fichier par fichier, et non par un
+# `cp -R` du répertoire. Recopier l'arbre y ferait entrer ce qui y traîne, et
+# `check-source.sh` refuse par construction tout fichier étranger : un
+# `.DS_Store` posé par le Finder faisait alors tomber deux assertions qui ne
+# parlent pas de lui. L'ironie compte ici, cette PR porte sur macOS. Un
+# instantané git réglerait aussi le problème, mais la suite exerce l'arbre de
+# travail, et c'est ce qui permet de valider un correctif avant de le commiter.
+SRC="$WORK/copie de la source"; mkdir -p "$SRC/AGENTIC_RULES" "$SRC/scripts"
+while IFS= read -r f; do
+  mkdir -p "$SRC/$(dirname "$f")"
+  cp -p "$ROOT/$f" "$SRC/$f"
+done <<< "$(grep -v '^[[:space:]]*#' "$ROOT/AGENTIC_RULES/MANIFEST" | grep -v '^[[:space:]]*$')"
+cp -p "$ROOT/AGENTIC_RULES/project.config.yml" "$SRC/AGENTIC_RULES/"
+cp -p "$ROOT/scripts/check-source.sh" "$SRC/scripts/"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la copie du dépôt source est conforme" "$rc" "0"
+
+# Le nom est fabriqué sur deux contraintes. Ses deux moitiés doivent être l'une
+# et l'autre autorisées, sinon le test passerait pour la mauvaise raison. Et il
+# ne doit pas finir en `.md`, sans quoi le glob du premier contrôle l'attrape
+# par accident, en nommant au passage un fichier qui n'existe pas.
+clandestin="$SRC/AGENTIC_RULES/$(printf '.provenance\nproject.config.yml')"
+printf 'charge clandestine\n' > "$clandestin"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "un nom à saut de ligne fait refuser la source" "$rc" "1"
+printf '%s' "$out" | grep -qF 'fichier parasite dans AGENTIC_RULES/ : .provenance\nproject.config.yml' \
+  && ok "le parasite de la source est nommé d'un seul tenant" || ko "le parasite de la source est nommé d'un seul tenant"
+rm "$clandestin"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source redevient conforme une fois le nom retiré" "$rc" "0"
+
+# Construire la copie depuis le MANIFEST rend un cas structurellement absent :
+# un fichier présent sur disque mais non manifesté, c'est à dire la règle
+# ajoutée sans sa ligne au MANIFEST, l'oubli le plus probable de ce dépôt. Le
+# cas s'injecte donc après coup, en retirant la ligne du MANIFEST copié plutôt
+# qu'en comptant sur ce qui traînerait sur le disque. Ces assertions couvrent un
+# contrôle qui n'en avait aucun ; elles ne tombent pas contre la version
+# précédente, qui le détectait déjà.
+#
+# Les deux contrôles lisent le même MANIFEST, donc retirer une ligne les fait
+# tous deux réagir : le refus global est satisfait par l'un ou l'autre et ne
+# prouve rien à lui seul. C'est la vérification du message qui épingle celui-ci,
+# et elle seule tombe quand on neutralise la boucle. Le dire plutôt que compter
+# deux couvertures là où il n'y en a qu'une.
+grep -v '^AGENTIC_RULES/REVIEWERS\.md$' "$SRC/AGENTIC_RULES/MANIFEST" > "$SRC/manifeste ampute"
+mv "$SRC/manifeste ampute" "$SRC/AGENTIC_RULES/MANIFEST"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "une règle absente du MANIFEST fait refuser la source" "$rc" "1"
+printf '%s' "$out" | grep -q 'fichier du corpus absent du MANIFEST : AGENTIC_RULES/REVIEWERS.md' \
+  && ok "la règle non manifestée est nommée" || ko "la règle non manifestée est nommée"
+cp -p "$ROOT/AGENTIC_RULES/MANIFEST" "$SRC/AGENTIC_RULES/MANIFEST"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source redevient conforme une fois le MANIFEST rétabli" "$rc" "0"
+
+# Le couplage décrit juste au-dessus se défait sur une entrée hors du répertoire
+# des règles. La boucle des parasites ne parcourt que `AGENTIC_RULES/`, tandis
+# que celle du MANIFEST couvre aussi les pointeurs de la racine. Amputer
+# `CLAUDE.md` ne laisse donc qu'un seul contrôle réagir, et le refus devient
+# imputable à lui seul. Les deux entrées gardent chacune leur raison d'être :
+# `REVIEWERS.md` exerce la branche glob, celle du scénario réel d'une règle
+# ajoutée sans sa ligne ; `CLAUDE.md` prouve que ce contrôle refuse tout seul.
+grep -v '^CLAUDE\.md$' "$SRC/AGENTIC_RULES/MANIFEST" > "$SRC/manifeste ampute"
+mv "$SRC/manifeste ampute" "$SRC/AGENTIC_RULES/MANIFEST"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "un pointeur de racine non manifesté fait refuser à lui seul" "$rc" "1"
+printf '%s' "$out" | grep -q 'fichier du corpus absent du MANIFEST : CLAUDE.md' \
+  && ok "le pointeur non manifesté est nommé" || ko "le pointeur non manifesté est nommé"
+n="$(printf '%s' "$out" | grep -c 'fichier parasite' || true)"
+check "aucun autre contrôle ne réagit sur cette entrée" "$n" "0"
+cp -p "$ROOT/AGENTIC_RULES/MANIFEST" "$SRC/AGENTIC_RULES/MANIFEST"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source redevient conforme après la seconde amputation" "$rc" "0"
+
+# Un parasite ordinaire reste détecté : la correction ne doit pas avoir déplacé
+# la détection au lieu de l'élargir.
+printf 'regle locale\n' > "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "un parasite ordinaire fait toujours refuser la source" "$rc" "1"
+printf '%s' "$out" | grep -q 'LOCAL_RULES.md' \
+  && ok "le parasite ordinaire est nommé" || ko "le parasite ordinaire est nommé"
+rm "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
 
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
