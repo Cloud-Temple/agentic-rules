@@ -36,10 +36,19 @@ versionnement sémantique.
   vrai ajout local en le nommant. Un `find` muet, sous lequel le contrôle doit
   refuser en disant `ENUMERATION VIDE` sans jamais parler de dérive. Et un `..`
   interne qui doit passer pendant qu'un `..` sortant reste refusé.
-  Sept de ces neuf assertions tombent contre le script d'avant correctif. Les
-  deux autres ne discriminent pas seules : l'ancien code échouait aussi sur un
-  vrai ajout, mais pour la mauvaise raison, et c'est l'assertion voisine sur le
-  nom du fichier qui fait la différence.
+  Six de ces neuf assertions tombent contre le script d'avant correctif. Les
+  trois autres ne discriminent pas seules, et le dire vaut mieux que compter
+  neuf preuves : sous l'ancien code la boucle voyait toujours sa ligne vide
+  fantôme, donc le contrôle refusait de toute façon, pour la mauvaise raison.
+  Ce sont les assertions voisines, sur le nom du fichier et sur le libellé de
+  l'échec, qui font la différence. La troisième est un contrôle de propreté qui
+  n'a jamais eu vocation à discriminer.
+  Une septième assertion tombe aussi, mais elle existait déjà : c'est celle du
+  chemin remontant, dont l'attendu passe de `CHEMIN SORTANT` à `HORS DEPOT`.
+- `check-source.sh` portait le même `find -printf` que le script distribué. Il
+  n'est pas dans la charge utile et la CI de la source tourne sur Linux, mais
+  laisser le défaut dans l'outil qui valide la source pendant qu'on le corrige
+  dans l'outil distribué n'avait pas de sens.
 
 ## [1.4.0] - 2026-09-17
 
