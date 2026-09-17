@@ -54,7 +54,9 @@ Respecter leurs valeurs existantes. Ne pas publier les arbitrages privés ou
 les données clients. Distinguer responsable de pilotage et personne assignée.
 
 Pour une mise à jour du Project : lire l'état, appliquer seulement les changements
-nécessaires, puis vérifier par une lecture distincte. Avant un lot important,
+nécessaires, puis vérifier par une lecture distincte. Ces deux lectures paginent,
+et elles peuvent être tronquées de la même façon : la vérification confirmerait
+alors la troncature. Les prouver complètes, selon `WORKFLOW_ENGINEERING.md`. Avant un lot important,
 vérifier le quota disponible. Après une erreur partielle, relire l'état et
 reprendre les seules opérations manquantes. Ne pas déplacer les objets hors
 périmètre pour faire du rangement. Signaler les écarts pertinents non corrigés.

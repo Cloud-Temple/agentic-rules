@@ -3,6 +3,46 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.6.0] - 2026-09-17
+
+### Ajouté
+
+- `WORKFLOW_ENGINEERING.md` : le code qui compte va dans un fichier. Une commande
+  d'inspection jetable reste une commande, mais du code qui sera rejoué, dont le
+  résultat sert de preuve ou qui modifie un état n'a rien à faire dans un bloc de
+  texte passé au shell : il n'apparaît dans aucun diff, ne se teste pas séparément
+  et échappe aux contrôles du tableau de risque. Règle tombée en démontant les
+  `.clinerules` de `mcp-alerts`, que le corpus ne portait nulle part. Signalée
+  en #8.
+- `WORKFLOW_ENGINEERING.md`, section « Réglages et publics » : une valeur qui
+  gouverne un comportement en exploitation se règle, une constante qui définit un
+  format reste dans le code. La frontière n'est pas « est-ce un nombre », c'est de
+  savoir si un exploitant pourrait légitimement vouloir une autre valeur. Le point
+  2 du contrat de travail, lu seul, poussait à figer la constante puisqu'il
+  décourage d'ajouter un paramètre sans besoin actuel. Signalée en #11.
+- `WORKFLOW_ENGINEERING.md`, même section : la question de l'autre public. Une
+  capacité livrée à un agent par les outils MCP s'expose aussi à une personne par
+  une console ou une ligne de commande, et l'inverse. La question se pose et se
+  répond ; la duplication ne s'impose pas. Sans cette question, une capacité
+  n'existe que d'un côté sans que personne l'ait décidé. Signalée en #10.
+- `WORKFLOW_ENGINEERING.md` : une lecture paginée n'est exploitable qu'une fois
+  prouvée complète, en comparant le nombre d'éléments rendus au total annoncé.
+  Le corpus disait déjà qu'une liste partielle ne prouve pas une absence ; il ne
+  disait rien de la lecture tronquée dont on tire un diagnostic. Deux incidents
+  sur le board de `mcp-agent`, dont un où une limite portée à 200 en masquait
+  encore 41 sur 241 : une limite choisie à la main se fait rattraper par la
+  croissance, c'est la comparaison qui protège. Signalée en #12.
+
+### Modifié
+
+- `MAIN_RULES.md`, contrat de travail point 2 : un réglage que l'exploitation
+  devra changer est un besoin actuel, pas une abstraction. Sans cette précision,
+  le point interdisait ce que la nouvelle règle exige.
+- `WORKFLOW_GIT_EPIC.md` : la lecture d'état d'un Project et la lecture de
+  vérification paginent toutes les deux et peuvent être tronquées de la même
+  façon, auquel cas la vérification confirme la troncature. Renvoi vers la règle
+  générale plutôt qu'une seconde formulation.
+
 ## [1.5.0] - 2026-09-17
 
 ### Corrigé

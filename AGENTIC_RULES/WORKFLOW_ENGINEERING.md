@@ -19,6 +19,13 @@ Une correction de faute dans une règle reste éditoriale. Un changement de
 configuration qui modifie l'exécution ne l'est pas. En cas de doute sur l'impact,
 examiner le composant concerné avant de choisir les contrôles.
 
+Le code qui compte va dans un fichier. Une commande d'inspection jetable reste
+une commande. Dès qu'un bout de code sera rejoué, que son résultat sert de preuve
+ou qu'il modifie un état, il s'écrit dans un fichier, même temporaire : passé au
+shell dans un bloc de texte, il n'apparaît dans aucun diff, ne se teste pas
+séparément et échappe aux contrôles de ce tableau. La frontière n'est pas le
+nombre de lignes, c'est de savoir si quelqu'un devra le relire ou le rejouer.
+
 Ne pas dupliquer la même revue avant et après commit : associer la revue à une
 révision précise, par SHA ou diff conservé. Après une modification, revoir le
 delta et relancer les contrôles qu'il affecte. Un simple changement de SHA sans
@@ -53,6 +60,25 @@ le prérequis mémoire de `MAIN_RULES.md` est satisfait. Les changements
 qui exigent une revue indépendante restent non prêts au merge ou à l'exécution
 sur un système partagé tant que cette revue manque. Aucun verdict ne s'invente.
 
+## Réglages et publics
+
+Une valeur qui gouverne un comportement en exploitation se règle : délai
+d'expiration, nombre de tentatives, taille de page, seuil. Elle vit dans la
+configuration ou l'environnement, avec un défaut explicite. Une constante qui
+définit un format reste dans le code : constante de protocole, longueur d'un
+condensat, code d'erreur. La frontière n'est pas « est-ce un nombre », c'est de
+savoir si un exploitant pourrait légitimement vouloir une autre valeur. Un seuil
+figé se découvre en production, pas en revue.
+
+Une même capacité s'expose souvent à deux publics : un agent par les outils MCP,
+une personne par une console, une interface en ligne de commande ou un shell.
+Quand une capacité est livrée à l'un, poser la question de l'autre, et y
+répondre : comment une personne inspecte ou administre ce qu'un agent vient
+d'obtenir, et l'inverse. La question se pose, la duplication ne s'impose pas.
+« Ce public n'a pas besoin de cette opération » est une réponse valide, à
+condition d'avoir été posée et dite. Sans elle, une capacité n'existe que d'un
+côté sans que personne l'ait décidé.
+
 ## Tests utiles
 
 - Pour un défaut de comportement, reproduire l'échec puis montrer la réussite
@@ -76,6 +102,12 @@ sur un système partagé tant que cette revue manque. Aucun verdict ne s'invente
   provenant de l'autorité pertinente. Un accès refusé, un timeout ou une liste
   partielle ne prouve pas une absence. En cas d'incertitude, préserver l'état et
   produire un diagnostic exploitable, sans annoncer un succès trompeur.
+- Une lecture paginée n'est exploitable qu'une fois prouvée complète. Demander une
+  limite supérieure au volume attendu, puis comparer le nombre d'éléments rendus
+  au total annoncé par la source. S'ils diffèrent, la lecture est tronquée et rien
+  ne s'en conclut, ni diagnostic, ni vérification après écriture. Une limite
+  choisie à la main parce qu'elle paraissait large se fait rattraper par la
+  croissance : c'est la comparaison qui protège, pas le nombre.
 - Distinguer une valeur non renseignée d'une valeur explicitement demandée.
   Ne pas laisser le mapping ou la sérialisation décider d'une suppression sur
   la base d'un signal ambigu.
