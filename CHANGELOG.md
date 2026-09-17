@@ -3,6 +3,27 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.7.0] - 2026-09-17
+
+### Corrigé
+
+- `agentic-rules.sh` : un fichier dont le nom contient un saut de ligne
+  échappait au contrôle d'ajout local. Le défaut avait deux moitiés, et ne
+  corriger que la première l'aurait laissé exploitable. L'énumération découpait
+  sur `\n`, si bien que le seul fichier `MAIN_RULES.md<LF>PROJECT_RULES.md`
+  rendait deux noms tous deux présents au corpus ; elle se termine désormais sur
+  `\0`, accepté par GNU comme par BSD. Mais la comparaison passait aussi par
+  `grep -x`, où un motif contenant un saut de ligne vaut plusieurs motifs
+  alternatifs : elle se fait maintenant par égalité de chaînes, terme à terme.
+  Le tri disparaît plutôt que d'appeler `sort -z`, absent de BSD, l'étape n'en
+  dépendant pas. Le diagnostic rend les caractères de contrôle visibles, sinon
+  un tel nom étalait le message sur plusieurs lignes. Signalé en #18, trouvé par
+  la revue indépendante de #17.
+
+  Gravité mesurée : ce n'est pas une maladresse possible mais un contournement
+  qui demande de fabriquer le nom exprès. Il fonctionnait dans les dix dépôts
+  porteurs du corpus et dans les trois PR d'installation en attente.
+
 ## [1.6.0] - 2026-09-17
 
 ### Ajouté

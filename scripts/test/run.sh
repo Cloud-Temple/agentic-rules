@@ -277,6 +277,35 @@ printf '%s' "$out" | grep -q "AJOUT LOCAL" \
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "la cible reste conforme une fois le find rendu" "$rc" "0"
 
+# Un nom de fichier peut contenir un saut de ligne. Découpée sur `\n`,
+# l'énumération rendait deux noms au lieu d'un, tous deux au corpus, et le
+# fichier passait : un contournement délibéré du contrôle, pas une maladresse.
+# Le nom est fabriqué pour que ses deux moitiés soient l'une et l'autre
+# autorisées, sans quoi le test passerait pour la mauvaise raison.
+sournois="$T/AGENTIC_RULES/$(printf 'MAIN_RULES.md\nPROJECT_RULES.md')"
+printf 'regle clandestine\n' > "$sournois"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un nom contenant un saut de ligne fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -qF 'AJOUT LOCAL AGENTIC_RULES/MAIN_RULES.md\nPROJECT_RULES.md' \
+  && ok "le nom clandestin est nommé d'un seul tenant" || ko "le nom clandestin est nommé d'un seul tenant"
+# Compter les lignes, pas seulement en trouver une : un diagnostic scindé en
+# deux signalerait le même fichier deux fois sous deux noms qui n'existent pas.
+n="$(printf '%s' "$out" | grep -c 'AJOUT LOCAL')"
+check "le nom vaut un seul ajout, pas deux" "$n" "1"
+rm "$sournois"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "la cible redevient conforme une fois le nom retiré" "$rc" "0"
+
+# Les autres caractères de contrôle cassent l'affichage sans cacher le fichier.
+# La détection ne dépend pas d'eux, la lisibilité du diagnostic si.
+sournois="$T/AGENTIC_RULES/$(printf 'REGLE\tLOCALE.md')"
+printf 'regle clandestine\n' > "$sournois"
+out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "une tabulation dans le nom fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -qF 'AJOUT LOCAL AGENTIC_RULES/REGLE\tLOCALE.md' \
+  && ok "la tabulation est rendue visible" || ko "la tabulation est rendue visible"
+rm "$sournois"
+
 # La lecture doit tenir compte de la section. Le schéma réutilise déjà `server`
 # sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
 # la valeur de la mauvaise section, en silence. Un leurre placé AVANT la section
