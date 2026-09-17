@@ -41,7 +41,10 @@ versionnement sémantique.
   parlent pas de lui. Le contrôle qui attrape une règle ajoutée sans sa ligne au
   MANIFEST devenait de ce fait inexerçable, la copie ne contenant par
   construction que des fichiers manifestés : le cas s'injecte donc après coup,
-  en amputant le MANIFEST copié.
+  en amputant le MANIFEST copié. Deux entrées y sont amputées tour à tour, une
+  sous `AGENTIC_RULES/` pour le scénario réel d'une règle ajoutée sans sa ligne,
+  une à la racine parce qu'elle seule met ce contrôle hors d'atteinte de celui
+  des fichiers parasites et rend donc le refus imputable à lui seul.
 
 ## [1.6.0] - 2026-09-17
 

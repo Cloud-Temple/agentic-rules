@@ -520,6 +520,25 @@ cp -p "$ROOT/AGENTIC_RULES/MANIFEST" "$SRC/AGENTIC_RULES/MANIFEST"
 "$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
 check "la source redevient conforme une fois le MANIFEST rétabli" "$rc" "0"
 
+# Le couplage décrit juste au-dessus se défait sur une entrée hors du répertoire
+# des règles. La boucle des parasites ne parcourt que `AGENTIC_RULES/`, tandis
+# que celle du MANIFEST couvre aussi les pointeurs de la racine. Amputer
+# `CLAUDE.md` ne laisse donc qu'un seul contrôle réagir, et le refus devient
+# imputable à lui seul. Les deux entrées gardent chacune leur raison d'être :
+# `REVIEWERS.md` exerce la branche glob, celle du scénario réel d'une règle
+# ajoutée sans sa ligne ; `CLAUDE.md` prouve que ce contrôle refuse tout seul.
+grep -v '^CLAUDE\.md$' "$SRC/AGENTIC_RULES/MANIFEST" > "$SRC/manifeste ampute"
+mv "$SRC/manifeste ampute" "$SRC/AGENTIC_RULES/MANIFEST"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "un pointeur de racine non manifesté fait refuser à lui seul" "$rc" "1"
+printf '%s' "$out" | grep -q 'fichier du corpus absent du MANIFEST : CLAUDE.md' \
+  && ok "le pointeur non manifesté est nommé" || ko "le pointeur non manifesté est nommé"
+n="$(printf '%s' "$out" | grep -c 'fichier parasite' || true)"
+check "aucun autre contrôle ne réagit sur cette entrée" "$n" "0"
+cp -p "$ROOT/AGENTIC_RULES/MANIFEST" "$SRC/AGENTIC_RULES/MANIFEST"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source redevient conforme après la seconde amputation" "$rc" "0"
+
 # Un parasite ordinaire reste détecté : la correction ne doit pas avoir déplacé
 # la détection au lieu de l'élargir.
 printf 'regle locale\n' > "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
