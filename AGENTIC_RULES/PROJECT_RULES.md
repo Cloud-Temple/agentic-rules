@@ -143,6 +143,12 @@ Un refus non élucidé interdit la création, quelle que soit la suite. Un dép�
 déclare un `memory.live.space_id` qui n'existe encore nulle part. Ce cas n'est
 pas une panne, et il ne doit pas arrêter le travail.
 
+Une session de revue indépendante ne crée pas cet espace : elle n'écrit jamais,
+et `MAIN_RULES.md` nomme cette exception. Pour elle seule, un espace introuvable
+sur tous les serveurs arrête la revue avec la portée d'un blocage mémoire, sans
+le remède décrit ci-dessous : elle signale l'absence et ne rend pas de verdict.
+La création revient à une session ordinaire du projet.
+
 Le serveur ne distingue pas un espace absent d'un espace existant hors des
 droits du jeton : les deux rendent le même refus d'accès. C'est la tentative de
 création qui lève l'ambiguïté, parce qu'elle n'écrase jamais un espace existant.

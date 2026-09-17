@@ -52,6 +52,12 @@ versionnement sémantique.
   seule tout en lui opposant un prérequis exigeant lecture et écriture, sans
   jamais dire comment elle s'en acquitte.
 - `PROJECT_RULES.md` : l'étape 1 du démarrage renvoie à cette exception.
+- `PROJECT_RULES.md` : « Espace mémoire absent » dit ce que fait une session de
+  revue quand l'espace est introuvable sur tous les serveurs. Le remède unique de
+  cette section est `space_create`, une écriture que son mandat lui interdit, et
+  la section refuse par ailleurs l'arrêt puisque ce cas n'est pas une panne. Elle
+  n'avait donc aucune issue. Elle signale l'absence, ne crée rien et ne rend pas
+  de verdict ; la création revient à une session ordinaire.
 - `REVIEWERS.md` : le relecteur établit sa lecture en lisant réellement l'espace,
   et n'affirme pas la moitié écriture. Une version intermédiaire de cette PR la
   faisait tenir à un droit déclaré par le serveur ; la revue a vérifié le schéma
