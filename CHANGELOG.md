@@ -38,7 +38,10 @@ versionnement sémantique.
   fabriqué. Cette copie se construit depuis le MANIFEST, fichier par fichier :
   recopier le répertoire y faisait entrer ce qui traîne dans l'arbre de travail,
   et un `.DS_Store` posé par le Finder faisait tomber deux assertions qui ne
-  parlent pas de lui.
+  parlent pas de lui. Le contrôle qui attrape une règle ajoutée sans sa ligne au
+  MANIFEST devenait de ce fait inexerçable, la copie ne contenant par
+  construction que des fichiers manifestés : le cas s'injecte donc après coup,
+  en amputant le MANIFEST copié.
 
 ## [1.6.0] - 2026-09-17
 

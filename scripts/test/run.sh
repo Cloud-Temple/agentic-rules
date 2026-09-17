@@ -497,6 +497,29 @@ rm "$clandestin"
 "$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
 check "la source redevient conforme une fois le nom retiré" "$rc" "0"
 
+# Construire la copie depuis le MANIFEST rend un cas structurellement absent :
+# un fichier présent sur disque mais non manifesté, c'est à dire la règle
+# ajoutée sans sa ligne au MANIFEST, l'oubli le plus probable de ce dépôt. Le
+# cas s'injecte donc après coup, en retirant la ligne du MANIFEST copié plutôt
+# qu'en comptant sur ce qui traînerait sur le disque. Ces assertions couvrent un
+# contrôle qui n'en avait aucun ; elles ne tombent pas contre la version
+# précédente, qui le détectait déjà.
+#
+# Les deux contrôles lisent le même MANIFEST, donc retirer une ligne les fait
+# tous deux réagir : le refus global est satisfait par l'un ou l'autre et ne
+# prouve rien à lui seul. C'est la vérification du message qui épingle celui-ci,
+# et elle seule tombe quand on neutralise la boucle. Le dire plutôt que compter
+# deux couvertures là où il n'y en a qu'une.
+grep -v '^AGENTIC_RULES/REVIEWERS\.md$' "$SRC/AGENTIC_RULES/MANIFEST" > "$SRC/manifeste ampute"
+mv "$SRC/manifeste ampute" "$SRC/AGENTIC_RULES/MANIFEST"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "une règle absente du MANIFEST fait refuser la source" "$rc" "1"
+printf '%s' "$out" | grep -q 'fichier du corpus absent du MANIFEST : AGENTIC_RULES/REVIEWERS.md' \
+  && ok "la règle non manifestée est nommée" || ko "la règle non manifestée est nommée"
+cp -p "$ROOT/AGENTIC_RULES/MANIFEST" "$SRC/AGENTIC_RULES/MANIFEST"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source redevient conforme une fois le MANIFEST rétabli" "$rc" "0"
+
 # Un parasite ordinaire reste détecté : la correction ne doit pas avoir déplacé
 # la détection au lieu de l'élargir.
 printf 'regle locale\n' > "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
