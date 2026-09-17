@@ -465,9 +465,21 @@ after_snap="$(snapshot "$T7")" || exit 2
 # passer est empreinté au tag suivant, puis propagé dans toute la flotte. Il
 # portait le même défaut que le script distribué, en pire, parce que rien en
 # aval ne le rattrape.
-SRC="$WORK/copie de la source"; mkdir -p "$SRC"
-cp -R "$ROOT/AGENTIC_RULES" "$ROOT/scripts" "$SRC/"
-cp "$ROOT/AGENTS.md" "$ROOT/CLAUDE.md" "$ROOT/QWEN.md" "$SRC/"
+#
+# La copie se construit depuis le MANIFEST, fichier par fichier, et non par un
+# `cp -R` du répertoire. Recopier l'arbre y ferait entrer ce qui y traîne, et
+# `check-source.sh` refuse par construction tout fichier étranger : un
+# `.DS_Store` posé par le Finder faisait alors tomber deux assertions qui ne
+# parlent pas de lui. L'ironie compte ici, cette PR porte sur macOS. Un
+# instantané git réglerait aussi le problème, mais la suite exerce l'arbre de
+# travail, et c'est ce qui permet de valider un correctif avant de le commiter.
+SRC="$WORK/copie de la source"; mkdir -p "$SRC/AGENTIC_RULES" "$SRC/scripts"
+while IFS= read -r f; do
+  mkdir -p "$SRC/$(dirname "$f")"
+  cp -p "$ROOT/$f" "$SRC/$f"
+done <<< "$(grep -v '^[[:space:]]*#' "$ROOT/AGENTIC_RULES/MANIFEST" | grep -v '^[[:space:]]*$')"
+cp -p "$ROOT/AGENTIC_RULES/project.config.yml" "$SRC/AGENTIC_RULES/"
+cp -p "$ROOT/scripts/check-source.sh" "$SRC/scripts/"
 "$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
 check "la copie du dépôt source est conforme" "$rc" "0"
 

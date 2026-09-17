@@ -34,8 +34,11 @@ versionnement sémantique.
   par un glob, la substitution de commande découpant sur les sauts de ligne.
 
 - Le contrôle du dépôt source n'était exercé par aucun test. Il l'est désormais
-  sur une copie jetable de l'arbre, avec un parasite ordinaire et un parasite à
-  nom fabriqué.
+  sur une copie jetable, avec un parasite ordinaire et un parasite à nom
+  fabriqué. Cette copie se construit depuis le MANIFEST, fichier par fichier :
+  recopier le répertoire y faisait entrer ce qui traîne dans l'arbre de travail,
+  et un `.DS_Store` posé par le Finder faisait tomber deux assertions qui ne
+  parlent pas de lui.
 
 ## [1.6.0] - 2026-09-17
 
