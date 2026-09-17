@@ -45,6 +45,14 @@ versionnement sémantique.
   n'a jamais eu vocation à discriminer.
   Une septième assertion tombe aussi, mais elle existait déjà : c'est celle du
   chemin remontant, dont l'attendu passe de `CHEMIN SORTANT` à `HORS DEPOT`.
+- `scripts/test/run.sh` : l'empreinte de comparaison échoue bruyamment si sa
+  moitié arborescence ne rend rien. Elle reste liée à GNU, et le harnais
+  l'assume. Sous un `find` sans `-printf`, cette moitié se taisait pendant que
+  les empreintes de contenu continuaient de sortir : les quatre comparaisons qui
+  s'en servent ne voyaient plus ni changement de type, ni de mode, ni de
+  structure, et passaient en ne comparant que le contenu. Mesuré, pas supposé.
+  Le garde-fou porte sur cette moitié précise, parce qu'un contrôle global sur la
+  concaténation n'aurait jamais rien détecté.
 - `check-source.sh` portait le même `find -printf` que le script distribué. Il
   n'est pas dans la charge utile et la CI de la source tourne sur Linux, mais
   laisser le défaut dans l'outil qui valide la source pendant qu'on le corrige

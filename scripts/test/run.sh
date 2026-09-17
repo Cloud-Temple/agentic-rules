@@ -18,8 +18,23 @@ check(){ if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 (attendu «$3», obtenu �
 git_c() { git -C "$1" -c user.email=test@local -c user.name=test "${@:2}"; }
 
 # Empreinte complète d'une cible : contenu de chaque fichier et arborescence.
-snapshot() { ( cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort
-               cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort ); }
+# Ce harnais reste lié à GNU, et l'assumer : `-printf` et `sha256sum` n'existent
+# pas partout. Mais une empreinte vide rendrait identiques deux cibles
+# quelconques, et les quatre comparaisons qui l'utilisent passeraient sans rien
+# comparer. Échouer bruyamment plutôt que silencieusement. Aucune des cibles
+# comparées n'est légitimement vide.
+snapshot() {
+  local tree sums
+  # La moitié arborescence est celle qui dépend de `-printf`. Si elle se tait,
+  # les comparaisons ne portent plus que sur le contenu des fichiers, et un
+  # changement de type, de mode ou de structure passe inaperçu. Le garde-fou
+  # porte donc sur elle, pas sur la concaténation des deux : la moitié empreinte
+  # continue de produire des lignes et masquerait le silence de la première.
+  tree="$(cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort)"
+  [ -n "$tree" ] || { printf 'HARNAIS arborescence vide pour %s : find -printf indisponible\n' "$1" >&2; exit 2; }
+  sums="$(cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort)"
+  printf '%s\n%s\n' "$tree" "$sums"
+}
 
 # Source git isolée. v0.0.0-test est l'état courant ; v0.0.1-test modifie un
 # fichier du corpus et en retire un autre, pour exercer une vraie montée de
