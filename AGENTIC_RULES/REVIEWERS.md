@@ -59,7 +59,9 @@ dépôts ne produisent pas des verdicts issus de configurations différentes.
   branche de « Trouver l'espace du projet », dans `PROJECT_RULES.md`, qui demande
   à l'utilisateur de choisir entre deux espaces homonymes. Lever l'ambiguïté en
   amont l'en dispense. Sans cette précision, il adresse le mauvais serveur et
-  rend « accès refusé » : une erreur d'adressage qui se lit comme une panne.
+  rend « accès refusé » : une erreur d'adressage qui se lit comme une panne. Si
+  l'ambiguïté l'atteint quand même, il n'attend pas une réponse qu'une invocation
+  bornée ne recevra jamais : c'est un blocage mémoire, il le signale et s'arrête.
 
 ## Mise à jour
 

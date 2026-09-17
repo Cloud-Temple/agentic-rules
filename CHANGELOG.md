@@ -63,6 +63,10 @@ versionnement sémantique.
   tout en refusant l'arrêt puisque ce cas n'est pas une panne. La seconde, qui
   définit la portée d'un blocage mémoire, prescrit la vérification d'une écriture
   et renvoie à cette même création : une exclusion locale ne la fermait pas.
+- `REVIEWERS.md` : ce que fait le relecteur si l'ambiguïté entre deux espaces
+  homonymes l'atteint malgré la précision demandée en amont. Il n'attend pas une
+  réponse qu'une invocation bornée ne recevra jamais : c'est un blocage mémoire.
+  La conduite se déduisait jusqu'ici de trois textes enchaînés.
 - `REVIEWERS.md` : le relecteur établit sa lecture en lisant réellement l'espace,
   et n'affirme pas la moitié écriture. Une version intermédiaire de cette PR la
   faisait tenir à un droit déclaré par le serveur ; la revue a vérifié le schéma

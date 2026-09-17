@@ -94,7 +94,8 @@ Aucun remède du prérequis qui suppose une écriture ne lui est applicable, où
 qu'il soit décrit : elle ne crée pas d'espace, ne corrige aucune configuration et
 ne vérifie aucune écriture. Devant un blocage mémoire, quelle qu'en soit la
 cause, elle le signale et s'arrête sans rendre de verdict. La règle vaut pour
-elle seule, et `REVIEWERS.md` en donne la conduite.
+elle seule. `REVIEWERS.md` dit comment ce relecteur établit sa lecture,
+`PROJECT_RULES.md` ce qu'il fait devant chaque blocage.
 
 Seuls le diagnostic et la configuration ou le rétablissement de l'accès mémoire,
 dans le mandat donné, peuvent précéder ce démarrage. Après rétablissement,
