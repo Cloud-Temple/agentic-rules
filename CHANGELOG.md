@@ -52,7 +52,10 @@ versionnement sémantique.
   s'en servent ne voyaient plus ni changement de type, ni de mode, ni de
   structure, et passaient en ne comparant que le contenu. Mesuré, pas supposé.
   Le garde-fou porte sur cette moitié précise, parce qu'un contrôle global sur la
-  concaténation n'aurait jamais rien détecté.
+  concaténation n'aurait jamais rien détecté. Et il arrête la suite, mesuré : la
+  fonction rend un code que chaque appelant vérifie. Quitter depuis la fonction
+  ne servait à rien, elle n'est appelée que dans des substitutions de commande,
+  et l'arrêt n'y tuait que le sous-shell pendant que la suite finissait en vert.
 - `check-source.sh` portait le même `find -printf` que le script distribué. Il
   n'est pas dans la charge utile et la CI de la source tourne sur Linux, mais
   laisser le défaut dans l'outil qui valide la source pendant qu'on le corrige

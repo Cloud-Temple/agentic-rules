@@ -30,8 +30,11 @@ snapshot() {
   # changement de type, de mode ou de structure passe inaperçu. Le garde-fou
   # porte donc sur elle, pas sur la concaténation des deux : la moitié empreinte
   # continue de produire des lignes et masquerait le silence de la première.
+  # La fonction rend un code, elle ne quitte pas : appelée dans `$(...)`, un
+  # `exit` ne tuerait que le sous-shell et la suite continuerait en vert. C'est
+  # l'appelant qui arrête, et chaque appel est donc suivi de `|| exit 2`.
   tree="$(cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort)"
-  [ -n "$tree" ] || { printf 'HARNAIS arborescence vide pour %s : find -printf indisponible\n' "$1" >&2; exit 2; }
+  [ -n "$tree" ] || { printf 'HARNAIS arborescence vide pour %s : find -printf indisponible\n' "$1" >&2; return 2; }
   sums="$(cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort)"
   printf '%s\n%s\n' "$tree" "$sums"
 }
@@ -341,10 +344,11 @@ check "update refuse un dépôt sans corpus" "$rc" "1"
 "$SCRIPT" check "$T2" >/dev/null 2>&1; rc=$?
 check "check refuse un dépôt sans corpus" "$rc" "1"
 printf 'instructions maison a ne pas perdre\n' > "$T2/AGENTS.md"
-before_snap="$(snapshot "$T2")"
+before_snap="$(snapshot "$T2")" || exit 2
 "$SCRIPT" install "$T2" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1; rc=$?
 check "install refuse d'écraser un fichier existant" "$rc" "1"
-[ "$(snapshot "$T2")" = "$before_snap" ] && ok "le refus laisse la cible strictement inchangée" || ko "le refus laisse la cible strictement inchangée"
+after_snap="$(snapshot "$T2")" || exit 2
+[ "$after_snap" = "$before_snap" ] && ok "le refus laisse la cible strictement inchangée" || ko "le refus laisse la cible strictement inchangée"
 "$SCRIPT" install "$T2" --ref v0.0.0-test --source "$SRC" --force >/dev/null 2>&1; rc=$?
 check "--force installe malgré le conflit" "$rc" "0"
 T3="$WORK/depot trois"; mkdir -p "$T3"
@@ -388,12 +392,13 @@ check "une source injoignable fait échouer --remote" "$rc" "1"
 printf 'MANIFEST hostile\n'
 printf 'a ne pas supprimer\n' > "$WORK/temoin externe.txt"
 printf '../temoin externe.txt\n' >> "$T5/AGENTIC_RULES/MANIFEST"
-before_snap="$(snapshot "$T5")"
+before_snap="$(snapshot "$T5")" || exit 2
 out="$("$SCRIPT" update "$T5" --ref v0.0.0-test --source "$SRC" 2>&1)"; rc=$?
 check "un chemin remontant fait échouer la mise à jour" "$rc" "1"
 printf '%s' "$out" | grep -q "chemin remontant interdit" && ok "l'échec est bien celui du chemin remontant" || ko "l'échec est bien celui du chemin remontant"
 [ -f "$WORK/temoin externe.txt" ] && ok "le fichier hors cible survit" || ko "le fichier hors cible survit"
-[ "$(snapshot "$T5")" = "$before_snap" ] && ok "la cible reste strictement inchangée" || ko "la cible reste strictement inchangée"
+after_snap="$(snapshot "$T5")" || exit 2
+[ "$after_snap" = "$before_snap" ] && ok "la cible reste strictement inchangée" || ko "la cible reste strictement inchangée"
 
 printf 'retour arrière\n'
 T6="$WORK/depot six"; mkdir -p "$T6"
@@ -404,10 +409,11 @@ fill_values "$T6"
 rm "$T6/AGENTIC_RULES/project.config.example.yml"
 mkdir -p "$T6/AGENTIC_RULES/project.config.example.yml/occupe"
 printf 'x\n' > "$T6/AGENTIC_RULES/project.config.example.yml/occupe/x"
-before_snap="$(snapshot "$T6")"
+before_snap="$(snapshot "$T6")" || exit 2
 "$SCRIPT" update "$T6" --ref v0.0.1-test --source "$SRC" >/dev/null 2>&1; rc=$?
 check "une bascule impossible échoue" "$rc" "1"
-[ "$(snapshot "$T6")" = "$before_snap" ] \
+after_snap="$(snapshot "$T6")" || exit 2
+[ "$after_snap" = "$before_snap" ] \
   && ok "la cible est rendue strictement intacte, contenus, types et modes" \
   || ko "la cible est rendue strictement intacte, contenus, types et modes"
 grep -q "ligne ajoutee en v0.0.1" "$T6/AGENTIC_RULES/REVIEWERS.md" \
@@ -417,12 +423,13 @@ grep -q "ligne ajoutee en v0.0.1" "$T6/AGENTIC_RULES/REVIEWERS.md" \
 # le quatrieme fichier de la charge utile, les trois premiers sont deja poses.
 T7="$WORK/depot sept"; mkdir -p "$T7"
 printf 'ce n est pas un repertoire\n' > "$T7/AGENTIC_RULES"
-before_snap="$(snapshot "$T7")"
+before_snap="$(snapshot "$T7")" || exit 2
 out="$("$SCRIPT" install "$T7" --ref v0.0.0-test --source "$SRC" 2>&1)"; rc=$?
 check "un parent impossible fait échouer l'installation" "$rc" "1"
 printf '%s' "$out" | grep -q "répertoire parent impossible" && ok "l'échec est bien celui du parent" || ko "l'échec est bien celui du parent"
 [ -e "$T7/AGENTS.md" ] && ko "les fichiers déjà posés sont retirés" || ok "les fichiers déjà posés sont retirés"
-[ "$(snapshot "$T7")" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
+after_snap="$(snapshot "$T7")" || exit 2
+[ "$after_snap" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
 
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
