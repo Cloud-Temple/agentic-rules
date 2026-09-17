@@ -40,14 +40,17 @@ versionnement sémantique.
 - `WORKFLOW_ENGINEERING.md` : une vérification ne vaut que ce que son moment
   garantit. Relire juste après avoir écrit ne prouve que l'instant. Relire une
   seconde fois avant de tenir la tâche pour finie, une fois les autres mutations
-  passées. La règle nomme sa propre limite : cette seconde lecture ne protège que
-  s'il s'est passé quelque chose entre les deux, et une mutation seule suivie de
-  rien reste exposée. Second volet de #12, documenté par l'incident
-  `mcp-agent#54` : un statut posé puis vérifié est retrouvé à sa valeur
-  précédente après d'autres mutations sur le même board, sans qu'aucune erreur
-  soit rendue. La cause n'y est pas établie ; l'hypothèse principale de l'issue
-  est une automation de la plateforme, et le texte ne présente donc pas la
-  concurrence entre écrivains comme le mécanisme.
+  passées. La règle nomme sa limite et lui donne un remède : cette seconde lecture
+  ne protège que s'il s'est passé quelque chose entre les deux, donc quand rien ne
+  suit la mutation, le reste du travail passe d'abord et la relecture vient en
+  dernier ; à défaut, la persistance se dit non établie. Second volet de #12,
+  documenté par l'incident `mcp-agent#54` : un statut posé puis vérifié est
+  retrouvé à sa valeur précédente après d'autres mutations sur le même board, sans
+  qu'aucune erreur soit rendue. L'hypothèse d'une automation y a été investiguée
+  et **réfutée** par la timeline de l'item, qui porte le même acteur humain que
+  les écritures des agents. Ce qui est établi est donc la collision d'identité
+  sous jeton partagé : l'audit ne distingue pas les écrivains et l'origine reste
+  indéterminable.
 
 ### Modifié
 
@@ -58,8 +61,8 @@ versionnement sémantique.
   vérification paginent toutes les deux et peuvent être tronquées de la même
   façon, auquel cas la vérification confirme la troncature. Renvoi vers la règle
   générale plutôt qu'une seconde formulation. Un board est par ailleurs écrit par
-  plusieurs mains, et ses automations déplacent des champs : les objets touchés se
-  relisent une seconde fois en fin de lot.
+  plusieurs mains : les objets touchés se relisent une seconde fois en fin de lot,
+  ou en dernier quand la mise à jour tient en une écriture.
 
 ## [1.5.0] - 2026-09-17
 

@@ -120,15 +120,17 @@ côté sans que personne l'ait décidé.
   choisie à la main parce qu'elle paraissait large se fait rattraper par la
   croissance : c'est la comparaison qui protège, pas le nombre.
 - Une vérification ne vaut que ce que son moment garantit. Relire juste après
-  avoir écrit ne prouve que l'instant : un effet différé de la plateforme, une
-  automation ou une autre écriture peut déplacer la valeur ensuite, sans qu'aucune
-  erreur soit rendue. Relire une seconde fois avant de tenir la tâche pour finie,
-  une fois les autres mutations passées. Cette seconde lecture ne protège que s'il
-  s'est passé quelque chose entre les deux : enchaînée à la première, elle rend le
-  même résultat. Une mutation seule, suivie de rien, reste donc exposée ; le dire
-  vaut mieux que cocher une case. Sur une ressource écrite par plusieurs mains
-  sous un même jeton, la concurrence est en plus invisible : dans le journal
-  d'audit, toutes les écritures portent le même acteur.
+  avoir écrit ne prouve que l'instant : la valeur peut se retrouver ailleurs
+  ensuite, sans qu'aucune erreur soit rendue, qu'une autre main l'ait déplacée ou
+  qu'un effet différé de la plateforme s'applique. Sur une ressource écrite par
+  plusieurs sous un même jeton, l'audit ne tranche pas : toutes les écritures y
+  portent le même acteur et le même type, et l'origine reste indéterminable.
+  Relire une seconde fois avant de tenir la tâche pour finie, une fois les autres
+  mutations passées. Cette seconde lecture ne protège que s'il s'est passé quelque
+  chose entre les deux : enchaînée à la première, elle rend le même résultat.
+  Quand rien ne suit la mutation, faire passer le reste du travail d'abord et
+  relire en dernier ; à défaut, dire que la persistance n'est pas établie plutôt
+  que de présenter la relecture immédiate comme une preuve qu'elle n'est pas.
 - Distinguer une valeur non renseignée d'une valeur explicitement demandée.
   Ne pas laisser le mapping ou la sérialisation décider d'une suppression sur
   la base d'un signal ambigu.
