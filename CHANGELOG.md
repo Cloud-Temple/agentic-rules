@@ -45,14 +45,21 @@ versionnement sémantique.
   homonymes. Le relecteur travaille en session non interactive et ne peut pas
   exécuter la branche de « Trouver l'espace du projet » qui demande à
   l'utilisateur de choisir ; lever l'ambiguïté en amont l'en dispense.
-- `REVIEWERS.md` : la lecture seule du relecteur porte aussi sur la mémoire. Le
-  corpus le définissait en lecture seule tout en lui opposant un prérequis
-  exigeant la lecture et l'écriture. Il constate les deux moitiés sans écrire :
-  l'appel d'identité du serveur rend les permissions du jeton et ses espaces
-  autorisés, donc le droit d'écriture s'y lit. Il rend compte d'un droit déclaré,
-  pas d'une écriture exécutée. L'issue #2 affirmait une vérification « en lecture
-  et en écriture » alors que les trois appels qu'elle donnait ne lisent que ;
-  cette version lève l'écart au lieu de le reconduire.
+- `MAIN_RULES.md` : le prérequis mémoire nomme son unique exception. La session
+  de revue indépendante travaille en lecture seule, établit son accès en lecture
+  et rien d'autre ; la moitié écriture lui est inapplicable, et ce qu'elle ne
+  peut pas établir, elle ne l'affirme pas. Le corpus la définissait en lecture
+  seule tout en lui opposant un prérequis exigeant lecture et écriture, sans
+  jamais dire comment elle s'en acquitte.
+- `PROJECT_RULES.md` : l'étape 1 du démarrage renvoie à cette exception.
+- `REVIEWERS.md` : le relecteur établit sa lecture en lisant réellement l'espace,
+  et n'affirme pas la moitié écriture. Une version intermédiaire de cette PR la
+  faisait tenir à un droit déclaré par le serveur ; la revue a vérifié le schéma
+  réel de l'appel d'identité et montré que la donnée ne le soutient pas, les
+  permissions étant portées par le jeton et les espaces listés à plat, sans être
+  croisés. Le fichier le dit désormais, pour éviter que l'inférence soit refaite.
+  L'issue #2 affirmait par ailleurs une vérification « en lecture et en écriture »
+  alors que les trois appels qu'elle donnait ne lisent que.
 
 ## [1.3.0] - 2026-09-16
 

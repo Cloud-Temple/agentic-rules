@@ -83,6 +83,14 @@ panne, ou un espace trouvé dont l'identité désigne un autre projet imposent
 l'arrêt du travail courant, y compris local. Le chat, un cache ou
 les fichiers du dépôt ne remplacent pas cette mémoire.
 
+Une exception, et une seule : la session de revue indépendante définie par
+`WORKFLOW_ENGINEERING.md` travaille en lecture seule et n'écrit jamais. Elle
+établit son accès en lecture, et rien d'autre. La moitié écriture du prérequis
+lui est inapplicable : une écriture qu'un mandat interdit ne se prouve pas sans
+la commettre, et un droit déclaré par un serveur n'est pas une écriture réussie.
+Ce que cette session ne peut pas établir, elle ne l'affirme pas. La règle vaut
+pour elle seule, et `REVIEWERS.md` en donne la conduite.
+
 Seuls le diagnostic et la configuration ou le rétablissement de l'accès mémoire,
 dans le mandat donné, peuvent précéder ce démarrage. Après rétablissement,
 charger le contexte avant de reprendre. Les autorisations et possibilités de

@@ -46,15 +46,13 @@ dépôts ne produisent pas des verdicts issus de configurations différentes.
   demander d'ignorer une règle pour pouvoir juger si elle est tenue.
 - **La lecture seule du relecteur porte aussi sur la mémoire.** Il n'écrit aucune
   note : une revue n'a pas à laisser de trace dans la banque du projet, et son
-  verdict revient par le pilote. Il constate pourtant lui-même les deux moitiés
-  du prérequis de `MAIN_RULES.md`, sans écrire, parce que le serveur les déclare.
-  L'appel d'identité rend les permissions du jeton et la liste des espaces
-  autorisés ; sur Live Memory c'est aujourd'hui `system_whoami`, à vérifier dans
-  le schéma réellement exposé. Y lire `write` et l'espace du projet établit le
-  droit d'écriture, et lire l'espace établit l'accès en lecture. Rendre compte de
-  ce qui a été constaté pour ce qu'il est : un droit déclaré par le serveur, non
-  une écriture exécutée. Un relecteur ne se dispense d'aucune vérification, il en
-  emploie une qui n'écrit pas.
+  verdict revient par le pilote. Il établit donc son accès **en lecture**, en
+  lisant réellement l'espace du projet, et il en rend compte. Il n'établit pas la
+  moitié écriture du prérequis mémoire et ne l'affirme pas : `MAIN_RULES.md`
+  nomme cette exception et la borne à ce seul rôle. Ne pas la remplacer par un
+  droit déclaré. Un jeton porte ses permissions globalement et ses espaces dans
+  une liste à plat, sans les croiser : y lire `write` n'établit pas le droit
+  d'écrire sur un espace donné.
 - **Nommer le serveur mémoire et l'espace** parmi les éléments de contexte
   fournis au relecteur, quand plusieurs serveurs exposent des outils homonymes.
   Le relecteur travaille en session non interactive : il ne peut pas exécuter la

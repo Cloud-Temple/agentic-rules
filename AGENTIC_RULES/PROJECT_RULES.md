@@ -117,7 +117,8 @@ chaque session ; c'est le prix de la traçabilité, pas un défaut à contourner
 1. Résoudre le serveur effectif selon « Trouver l'espace du projet », puis
    vérifier qu'il est disponible et que les droits sur l'espace couvrent la
    lecture et l'écriture de notes. Ne pas confondre présence d'un outil et accès
-   réel à cet espace.
+   réel à cet espace. Une session de revue indépendante, qui n'écrit jamais,
+   s'arrête à la lecture : voir l'exception nommée dans `MAIN_RULES.md`.
 2. Lire `space_rules(space_id="<memory.live.space_id>")` une fois pour connaître la structure.
 3. Charger le contexte courant et les décisions utiles. Utiliser `bank_read_all`
    si la banque est compacte ; sinon `bank_list` puis `bank_read` sur le contexte
