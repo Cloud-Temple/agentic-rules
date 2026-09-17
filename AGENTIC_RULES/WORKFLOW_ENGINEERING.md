@@ -20,11 +20,19 @@ configuration qui modifie l'exécution ne l'est pas. En cas de doute sur l'impac
 examiner le composant concerné avant de choisir les contrôles.
 
 Le code qui compte va dans un fichier. Une commande d'inspection jetable reste
-une commande. Dès qu'un bout de code sera rejoué, que son résultat sert de preuve
-ou qu'il modifie un état, il s'écrit dans un fichier, même temporaire : passé au
-shell dans un bloc de texte, il n'apparaît dans aucun diff, ne se teste pas
-séparément et échappe aux contrôles de ce tableau. La frontière n'est pas le
-nombre de lignes, c'est de savoir si quelqu'un devra le relire ou le rejouer.
+une commande, et une vérification ponctuelle aussi. Deux choses basculent dans un
+fichier, même temporaire, et pour deux raisons indépendantes.
+
+Le code qui sera rejoué ou qui modifie un état, parce qu'il doit être relu :
+passé au shell dans un bloc de texte, il n'apparaît dans aucun diff, ne se teste
+pas séparément et échappe aux contrôles de ce tableau. Et la commande longue,
+quel que soit son avenir, parce qu'elle se fait tronquer : une commande tronquée
+échoue à moitié, ou pire, réussit à moitié.
+
+Le premier motif porte sur ce que quelqu'un devra relire, le second sur ce qui
+arrive à l'envoi. Ni l'un ni l'autre ne se mesure en nombre de lignes, mais une
+commande assez longue pour qu'on se demande si elle passera entière a déjà
+répondu à la question.
 
 Ne pas dupliquer la même revue avant et après commit : associer la revue à une
 révision précise, par SHA ou diff conservé. Après une modification, revoir le
@@ -67,8 +75,11 @@ d'expiration, nombre de tentatives, taille de page, seuil. Elle vit dans la
 configuration ou l'environnement, avec un défaut explicite. Une constante qui
 définit un format reste dans le code : constante de protocole, longueur d'un
 condensat, code d'erreur. La frontière n'est pas « est-ce un nombre », c'est de
-savoir si un exploitant pourrait légitimement vouloir une autre valeur. Un seuil
-figé se découvre en production, pas en revue.
+savoir si deux déploiements du même service auraient besoin de valeurs
+différentes. Une valeur dont on imagine seulement qu'elle pourrait un jour
+changer reste dans le code : le point 2 du contrat de travail continue d'y
+interdire le paramètre sans besoin actuel. Un seuil figé, lui, se découvre en
+production et pas en revue.
 
 Une même capacité s'expose souvent à deux publics : un agent par les outils MCP,
 une personne par une console, une interface en ligne de commande ou un shell.
@@ -108,6 +119,13 @@ côté sans que personne l'ait décidé.
   ne s'en conclut, ni diagnostic, ni vérification après écriture. Une limite
   choisie à la main parce qu'elle paraissait large se fait rattraper par la
   croissance : c'est la comparaison qui protège, pas le nombre.
+- Une vérification ne vaut que ce que son moment garantit. Sur une ressource que
+  d'autres écrivent aussi, relire juste après avoir écrit ne prouve que l'instant :
+  la valeur peut repartir en arrière ensuite, sans qu'aucune erreur soit rendue.
+  Quand un lot de mutations porte sur une telle ressource, revérifier à la fin du
+  lot et pas seulement après chaque écriture. Un jeton partagé rend cette
+  concurrence invisible : dans le journal d'audit, toutes les écritures portent le
+  même acteur.
 - Distinguer une valeur non renseignée d'une valeur explicitement demandée.
   Ne pas laisser le mapping ou la sérialisation décider d'une suppression sur
   la base d'un signal ambigu.
