@@ -122,10 +122,11 @@ côté sans que personne l'ait décidé.
 - Une vérification ne vaut que ce que son moment garantit. Sur une ressource que
   d'autres écrivent aussi, relire juste après avoir écrit ne prouve que l'instant :
   la valeur peut repartir en arrière ensuite, sans qu'aucune erreur soit rendue.
-  Quand un lot de mutations porte sur une telle ressource, revérifier à la fin du
-  lot et pas seulement après chaque écriture. Un jeton partagé rend cette
-  concurrence invisible : dans le journal d'audit, toutes les écritures portent le
-  même acteur.
+  Relire une seconde fois avant de tenir la tâche pour finie : à la fin du lot
+  quand il y en a un, et sinon avant de conclure. Une écriture isolée n'est pas
+  moins exposée qu'un lot, elle offre seulement moins d'occasions de s'en
+  apercevoir. Un jeton partagé rend cette concurrence invisible : dans le journal
+  d'audit, toutes les écritures portent le même acteur.
 - Distinguer une valeur non renseignée d'une valeur explicitement demandée.
   Ne pas laisser le mapping ou la sérialisation décider d'une suppression sur
   la base d'un signal ambigu.

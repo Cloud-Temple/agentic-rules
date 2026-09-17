@@ -8,10 +8,11 @@ versionnement sémantique.
 ### Ajouté
 
 - `WORKFLOW_ENGINEERING.md` : le code qui compte va dans un fichier. Une commande
-  d'inspection jetable reste une commande, mais du code qui sera rejoué, dont le
-  résultat sert de preuve ou qui modifie un état n'a rien à faire dans un bloc de
-  texte passé au shell : il n'apparaît dans aucun diff, ne se teste pas séparément
-  et échappe aux contrôles du tableau de risque. Second motif, indépendant du
+  d'inspection jetable reste une commande, et une vérification ponctuelle aussi,
+  mais du code qui sera rejoué ou qui modifie un état n'a rien à faire dans un
+  bloc de texte passé au shell : il n'apparaît dans aucun diff, ne se teste pas
+  séparément et échappe aux contrôles du tableau de risque. Second motif,
+  indépendant du
   premier et venu d'un autre dépôt : une commande longue se fait tronquer, et une
   commande tronquée échoue à moitié ou réussit à moitié. Les deux règles étaient
   tombées en démontant les `.clinerules`, l'une dans `mcp-alerts` justifiée par la
@@ -19,12 +20,11 @@ versionnement sémantique.
 - `WORKFLOW_ENGINEERING.md`, section « Réglages et publics » : une valeur qui
   gouverne un comportement en exploitation se règle, une constante qui définit un
   format reste dans le code. La frontière n'est pas « est-ce un nombre », c'est de
-  savoir si un exploitant pourrait légitimement vouloir une autre valeur. Le point
-  2 du contrat de travail, lu seul, poussait à figer la constante puisqu'il
-  décourage d'ajouter un paramètre sans besoin actuel. Le test est concret, deux
-  déploiements du même service auraient-ils besoin de valeurs différentes, et non
-  « un exploitant pourrait-il vouloir autre chose », qui justifierait n'importe
-  quel paramètre et viderait le point 2. Signalée en #11.
+  savoir si deux déploiements du même service auraient besoin de valeurs
+  différentes. Le point 2 du contrat de travail, lu seul, poussait à figer la
+  constante puisqu'il décourage d'ajouter un paramètre sans besoin actuel. Un test
+  plus lâche, « un exploitant pourrait-il vouloir autre chose », a été écarté :
+  il justifierait n'importe quel paramètre et viderait le point 2. Signalée en #11.
 - `WORKFLOW_ENGINEERING.md`, même section : la question de l'autre public. Une
   capacité livrée à un agent par les outils MCP s'expose aussi à une personne par
   une console ou une ligne de commande, et l'inverse. La question se pose et se
@@ -39,8 +39,10 @@ versionnement sémantique.
   croissance, c'est la comparaison qui protège. Signalée en #12.
 - `WORKFLOW_ENGINEERING.md` : une vérification ne vaut que ce que son moment
   garantit. Sur une ressource que d'autres écrivent, relire juste après avoir
-  écrit ne prouve que l'instant. Un lot de mutations se revérifie à la fin, pas
-  seulement après chaque écriture. Second volet de #12, documenté par l'incident
+  écrit ne prouve que l'instant. Relire une seconde fois avant de tenir la tâche
+  pour finie, à la fin du lot quand il y en a un et sinon avant de conclure : une
+  écriture isolée n'est pas moins exposée, elle offre seulement moins d'occasions
+  de s'en apercevoir. Second volet de #12, documenté par l'incident
   `mcp-agent#54` : un statut posé puis vérifié est repassé à sa valeur précédente,
   sans qu'aucune erreur soit rendue. Un jeton partagé rend cette concurrence
   invisible, toutes les écritures portant le même acteur dans l'audit.
@@ -54,7 +56,7 @@ versionnement sémantique.
   vérification paginent toutes les deux et peuvent être tronquées de la même
   façon, auquel cas la vérification confirme la troncature. Renvoi vers la règle
   générale plutôt qu'une seconde formulation. Un board est par ailleurs écrit par
-  plusieurs mains : la vérification se refait en fin de lot.
+  plusieurs mains : la vérification se relit une seconde fois avant de conclure.
 
 ## [1.5.0] - 2026-09-17
 
