@@ -3,6 +3,67 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.6.0] - 2026-09-17
+
+### Ajouté
+
+- `WORKFLOW_ENGINEERING.md` : le code qui compte va dans un fichier. Une
+  commande d'inspection jetable reste une commande, et une vérification
+  ponctuelle aussi, mais du code qui sera rejoué ou qui modifie un état n'a rien
+  à faire dans un bloc de texte passé au shell : il n'apparaît dans aucun diff,
+  ne se teste pas séparément et échappe aux contrôles du tableau de risque.
+  Second motif, indépendant du premier et venu d'un autre dépôt : une commande
+  longue se fait tronquer, et une commande tronquée échoue à moitié ou réussit à
+  moitié. Les deux règles étaient tombées en démontant les `.clinerules`, l'une
+  dans `mcp-alerts` justifiée par la relecture, l'autre dans `mcp-agent`
+  justifiée par la fiabilité. Signalées en #8.
+- `WORKFLOW_ENGINEERING.md`, section « Réglages et publics » : une valeur qui
+  gouverne un comportement en exploitation se règle, une constante qui définit un
+  format reste dans le code. La frontière n'est pas « est-ce un nombre », c'est de
+  savoir si deux déploiements du même service auraient besoin de valeurs
+  différentes. Le point 2 du contrat de travail, lu seul, poussait à figer la
+  constante puisqu'il décourage d'ajouter un paramètre sans besoin actuel. Un test
+  plus lâche, « un exploitant pourrait-il vouloir autre chose », a été écarté :
+  il justifierait n'importe quel paramètre et viderait le point 2. Signalée en #11.
+- `WORKFLOW_ENGINEERING.md`, même section : la question de l'autre public. Une
+  capacité livrée à un agent par les outils MCP s'expose aussi à une personne par
+  une console ou une ligne de commande, et l'inverse. La question se pose et se
+  répond ; la duplication ne s'impose pas. Sans cette question, une capacité
+  n'existe que d'un côté sans que personne l'ait décidé. Signalée en #10.
+- `WORKFLOW_ENGINEERING.md` : une lecture paginée n'est exploitable qu'une fois
+  prouvée complète, en comparant le nombre d'éléments rendus au total annoncé.
+  Le corpus disait déjà qu'une liste partielle ne prouve pas une absence ; il ne
+  disait rien de la lecture tronquée dont on tire un diagnostic. Deux incidents
+  sur le board de `mcp-agent`, dont un où une limite portée à 200 en masquait
+  encore 41 sur 241 : une limite choisie à la main se fait rattraper par la
+  croissance, c'est la comparaison qui protège. Signalée en #12.
+- `WORKFLOW_ENGINEERING.md` : une vérification ne vaut que ce que son moment
+  garantit. Relire juste après avoir écrit ne prouve que l'instant. Relire une
+  seconde fois avant de tenir la tâche pour finie, une fois les autres mutations
+  passées. La règle nomme sa limite et lui donne un remède : cette seconde lecture
+  ne protège que s'il s'est passé quelque chose entre les deux, donc quand rien ne
+  suit la mutation, le reste du travail passe d'abord et la relecture vient en
+  dernier ; à défaut, la persistance se dit non établie. Second volet de #12,
+  documenté par l'incident `mcp-agent#54` : un statut posé puis vérifié est
+  retrouvé à sa valeur précédente après d'autres mutations sur le même board, sans
+  qu'aucune erreur soit rendue. L'hypothèse d'une automation y a été investiguée
+  et **réfutée** par la timeline de l'item, qui porte le même acteur humain que
+  les écritures des agents. Ce qui est établi est donc la collision d'identité
+  sous jeton partagé : l'audit ne distingue pas les écrivains et l'origine reste
+  indéterminable.
+
+### Modifié
+
+- `MAIN_RULES.md`, contrat de travail point 2 : un réglage que l'exploitation
+  devra changer est un besoin actuel, pas une abstraction. Sans cette précision,
+  le point interdisait ce que la nouvelle règle exige.
+- `WORKFLOW_GIT_EPIC.md` : la lecture d'état d'un Project et la lecture de
+  vérification paginent toutes les deux et peuvent être tronquées de la même
+  façon, auquel cas la vérification confirme la troncature. Renvoi vers la règle
+  générale plutôt qu'une seconde formulation. Un board est par ailleurs écrit par
+  plusieurs mains : les objets touchés se relisent une seconde fois en fin de lot,
+  ou en dernier quand la mise à jour tient en une écriture.
+
 ## [1.5.0] - 2026-09-17
 
 ### Corrigé
