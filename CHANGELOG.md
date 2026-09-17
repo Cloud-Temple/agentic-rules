@@ -3,6 +3,79 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.4.0] - 2026-09-17
+
+### Modifié
+
+- `REVIEWERS.md` : l'obligation `reasoning_effort: "none"` disparaît de la ligne
+  `codex`. Elle était justifiée par un HTTP 400 dès que des function tools sont
+  présents ; la mesure montre que des appels `codex exec` en `medium` et en
+  `xhigh`, serveurs MCP chargés, passent sans erreur. La contrainte valait peut-
+  être pour l'API directe, pas pour la CLI, qui est la façon dont le corpus fait
+  réellement relire.
+  Seule la CLI a été mesurée ; aucun autre chemin d'invocation n'est décrit par le
+  corpus, et aucune contrainte n'est réintroduite sur la foi d'une supposition.
+- `REVIEWERS.md` : le tableau annonçait ne déclarer aucun niveau de raisonnement
+  alors que la colonne de `codex` en imposait un. La contradiction est levée par
+  le retrait de ce niveau, sans ajout de phrase.
+- `REVIEWERS.md` : la colonne « Contrainte d'invocation » de `codex` porte
+  désormais une contrainte réelle et propre à ce fournisseur, ses outils MCP
+  absents de la liste visible.
+
+### Ajouté
+
+- `REVIEWERS.md` : ne pas forcer le niveau de raisonnement du relecteur. Un
+  niveau bas rend des verdicts sans que les règles du dépôt aient été ouvertes,
+  et parfois un blocage annoncé sans qu'un appel ait été tenté, indiscernable
+  d'un vrai blocage. Une contrainte technique réelle se nomme avec son périmètre
+  au lieu d'être généralisée.
+- `REVIEWERS.md` : les outils MCP de `codex` sont différés. Ils n'apparaissent
+  pas dans la liste que le modèle introspecte et restent appelables par leur nom.
+  Mesure du 17 septembre 2026, au niveau de raisonnement par défaut, sur le poste
+  qui porte deux serveurs mémoire : vingt-deux outils visibles, aucun de l'un ou
+  l'autre serveur, et l'appel nommé de `system_whoami` aboutit et rend la réponse
+  complète. Ce compte dépend de la configuration du poste, il reste ici et ne
+  figure pas dans la règle.
+  Un relecteur qui se fie à sa liste conclut qu'il n'a pas de mémoire, et le
+  prérequis bloquant de `MAIN_RULES.md` arrête la revue avant qu'elle commence.
+  Ce que l'on fournit au relecteur doit le dire, et lui laisser la vérification
+  de son propre accès plutôt que de l'en dispenser.
+- `REVIEWERS.md` : nommer le serveur mémoire et l'espace parmi les éléments de
+  contexte fournis au relecteur quand plusieurs serveurs exposent des outils
+  homonymes. Le relecteur travaille en session non interactive et ne peut pas
+  exécuter la branche de « Trouver l'espace du projet » qui demande à
+  l'utilisateur de choisir ; lever l'ambiguïté en amont l'en dispense.
+- `MAIN_RULES.md` : le prérequis mémoire nomme son unique exception. La session
+  de revue indépendante travaille en lecture seule, établit son accès en lecture
+  et rien d'autre ; la moitié écriture lui est inapplicable, et ce qu'elle ne
+  peut pas établir, elle ne l'affirme pas. Le corpus la définissait en lecture
+  seule tout en lui opposant un prérequis exigeant lecture et écriture, sans
+  jamais dire comment elle s'en acquitte.
+- `PROJECT_RULES.md` : l'étape 1 du démarrage renvoie à cette exception.
+- `MAIN_RULES.md` : aucun remède du prérequis qui suppose une écriture n'est
+  applicable à la session de revue, où qu'il soit décrit. Devant un blocage
+  mémoire, quelle qu'en soit la cause, elle le signale et s'arrête sans rendre de
+  verdict. Sans cette généralité, chaque section prescrivant un remède laissait la
+  revue sans issue, et il fallait les rattraper une par une.
+- `PROJECT_RULES.md` : « Espace mémoire absent » et « Mémoire absente ou en
+  panne » portent cette conduite à l'endroit où elles prescrivent leurs remèdes.
+  La première n'offrait que `space_create`, une écriture interdite au relecteur,
+  tout en refusant l'arrêt puisque ce cas n'est pas une panne. La seconde, qui
+  définit la portée d'un blocage mémoire, prescrit la vérification d'une écriture
+  et renvoie à cette même création : une exclusion locale ne la fermait pas.
+- `REVIEWERS.md` : ce que fait le relecteur si l'ambiguïté entre deux espaces
+  homonymes l'atteint malgré la précision demandée en amont. Il n'attend pas une
+  réponse qu'une invocation bornée ne recevra jamais : c'est un blocage mémoire.
+  La conduite se déduisait jusqu'ici de trois textes enchaînés.
+- `REVIEWERS.md` : le relecteur établit sa lecture en lisant réellement l'espace,
+  et n'affirme pas la moitié écriture. Une version intermédiaire de cette PR la
+  faisait tenir à un droit déclaré par le serveur ; la revue a vérifié le schéma
+  réel de l'appel d'identité et montré que la donnée ne le soutient pas, les
+  permissions étant portées par le jeton et les espaces listés à plat, sans être
+  croisés. Le fichier le dit désormais, pour éviter que l'inférence soit refaite.
+  L'issue #2 affirmait par ailleurs une vérification « en lecture et en écriture »
+  alors que les trois appels qu'elle donnait ne lisent que.
+
 ## [1.3.0] - 2026-09-16
 
 ### Modifié
