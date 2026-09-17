@@ -16,16 +16,64 @@ while IFS= read -r f; do
   [ -f "$f" ] || { printf 'MANIFEST annonce un fichier absent : %s\n' "$f"; rc=1; }
 done <<< "$manifest"
 
-for f in AGENTS.md CLAUDE.md QWEN.md $(ls AGENTIC_RULES/*.md 2>/dev/null); do
-  printf '%s\n' "$manifest" | grep -qx "$f" || { printf 'fichier du corpus absent du MANIFEST : %s\n' "$f"; rc=1; }
+# Le MANIFEST se lit ligne par ligne : un nom contenant un saut de ligne y est
+# irreprésentable, ses lignes sont donc sûres. Ce qui vient du disque ne l'est
+# pas, et c'est de ce côté que tout le soin porte.
+declare -a entries=()
+while IFS= read -r f; do
+  entries+=("$f")
+done <<< "$manifest"
+
+# L'appartenance se teste par égalité de chaînes. `grep -x` traiterait un motif
+# contenant un saut de ligne comme plusieurs motifs alternatifs, et un nom
+# fabriqué pour que ses moitiés soient autorisées passerait sans rien déclencher.
+has_entry() {
+  local needle="$1" e
+  for e in "${entries[@]}"; do
+    if [ "$e" = "$needle" ]; then return 0; fi
+  done
+  return 1
+}
+
+# Le glob rend chaque nom d'un bloc. `$(ls ...)` découpait sur les espaces et
+# les sauts de ligne : un fichier nommé avec un saut de ligne s'y scindait en
+# deux, et le diagnostic nommait un fichier qui n'existe pas.
+shopt -s nullglob
+for f in AGENTS.md CLAUDE.md QWEN.md AGENTIC_RULES/*.md; do
+  has_entry "$f" || { printf 'fichier du corpus absent du MANIFEST : %s\n' "$f"; rc=1; }
 done
+shopt -u nullglob
 
 # Rien d'autre que la charge utile, la configuration locale et la provenance.
-allowed="$(printf '%s\n' "$manifest" | sed -n 's|^AGENTIC_RULES/||p')"$'\n'"project.config.yml"$'\n'".provenance"
-while IFS= read -r base; do
-  printf '%s\n' "$allowed" | grep -qx "$base" \
-    || { printf 'fichier parasite dans AGENTIC_RULES/ : %s\n' "$base"; rc=1; }
-done < <(cd AGENTIC_RULES && find . -mindepth 1 | sed 's|^\./||' | sort)
+declare -a allowed=("project.config.yml" ".provenance")
+while IFS= read -r f; do
+  case "$f" in AGENTIC_RULES/*) allowed+=("${f#AGENTIC_RULES/}") ;; esac
+done <<< "$manifest"
+
+# Même défaut que dans le script distribué, corrigé de la même façon. Découpée
+# sur `\n`, l'énumération rendait deux noms autorisés pour un seul fichier :
+# `.provenance<LF>project.config.yml` traversait ce contrôle sans rien
+# déclencher, et c'est ici que se décide ce qui part en distribution.
+seen=0
+while IFS= read -r -d '' base; do
+  seen=$((seen + 1))
+  base="${base#./}"
+  found=0
+  for a in "${allowed[@]}"; do
+    if [ "$a" = "$base" ]; then found=1; break; fi
+  done
+  if [ "$found" -eq 0 ]; then
+    # Rendre les caractères de contrôle visibles, sinon le message s'étale sur
+    # plusieurs lignes et redevient indéchiffrable.
+    shown="$base"
+    shown="${shown//$'\r'/\\r}"
+    shown="${shown//$'\n'/\\n}"
+    shown="${shown//$'\t'/\\t}"
+    printf 'fichier parasite dans AGENTIC_RULES/ : %s\n' "$shown"
+    rc=1
+  fi
+done < <(cd AGENTIC_RULES && find . -mindepth 1 -print0)
+[ "$seen" -gt 0 ] || { printf 'enumeration vide de AGENTIC_RULES/ : find inutilisable\n'; rc=1; }
 
 [ -x AGENTIC_RULES/agentic-rules.sh ] || { printf 'le script distribué n est pas exécutable\n'; rc=1; }
 

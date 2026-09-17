@@ -460,5 +460,39 @@ printf '%s' "$out" | grep -q "répertoire parent impossible" && ok "l'échec est
 after_snap="$(snapshot "$T7")" || exit 2
 [ "$after_snap" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
 
+# Le contrôle du dépôt source n'était exercé par aucun test. C'est pourtant lui
+# qui décide de ce qui part en distribution : un fichier parasite qu'il laisse
+# passer est empreinté au tag suivant, puis propagé dans toute la flotte. Il
+# portait le même défaut que le script distribué, en pire, parce que rien en
+# aval ne le rattrape.
+SRC="$WORK/copie de la source"; mkdir -p "$SRC"
+cp -R "$ROOT/AGENTIC_RULES" "$ROOT/scripts" "$SRC/"
+cp "$ROOT/AGENTS.md" "$ROOT/CLAUDE.md" "$ROOT/QWEN.md" "$SRC/"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la copie du dépôt source est conforme" "$rc" "0"
+
+# Le nom est fabriqué sur deux contraintes. Ses deux moitiés doivent être l'une
+# et l'autre autorisées, sinon le test passerait pour la mauvaise raison. Et il
+# ne doit pas finir en `.md`, sans quoi le glob du premier contrôle l'attrape
+# par accident, en nommant au passage un fichier qui n'existe pas.
+clandestin="$SRC/AGENTIC_RULES/$(printf '.provenance\nproject.config.yml')"
+printf 'charge clandestine\n' > "$clandestin"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "un nom à saut de ligne fait refuser la source" "$rc" "1"
+printf '%s' "$out" | grep -qF 'fichier parasite dans AGENTIC_RULES/ : .provenance\nproject.config.yml' \
+  && ok "le parasite de la source est nommé d'un seul tenant" || ko "le parasite de la source est nommé d'un seul tenant"
+rm "$clandestin"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source redevient conforme une fois le nom retiré" "$rc" "0"
+
+# Un parasite ordinaire reste détecté : la correction ne doit pas avoir déplacé
+# la détection au lieu de l'élargir.
+printf 'regle locale\n' > "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
+out="$("$SRC/scripts/check-source.sh" 2>&1)"; rc=$?
+check "un parasite ordinaire fait toujours refuser la source" "$rc" "1"
+printf '%s' "$out" | grep -q 'LOCAL_RULES.md' \
+  && ok "le parasite ordinaire est nommé" || ko "le parasite ordinaire est nommé"
+rm "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
+
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

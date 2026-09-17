@@ -24,6 +24,19 @@ versionnement sémantique.
   qui demande de fabriquer le nom exprès. Il fonctionnait dans les dix dépôts
   porteurs du corpus et dans les trois PR d'installation en attente.
 
+- `scripts/check-source.sh` portait le même défaut, en pire, et rien en aval ne
+  le rattrapait : c'est lui qui décide de ce qui part en distribution. Un fichier
+  nommé `.provenance<LF>project.config.yml` traversait le contrôle sans rien
+  déclencher, le dépôt source restant `conforme`. Un nom finissant par `.md`
+  était refusé, mais par accident, par le glob d'un autre contrôle, et le
+  diagnostic nommait alors un fichier qui n'existe pas. Mêmes corrections que
+  dans le script distribué, plus le remplacement de `$(ls AGENTIC_RULES/*.md)`
+  par un glob, la substitution de commande découpant sur les sauts de ligne.
+
+- Le contrôle du dépôt source n'était exercé par aucun test. Il l'est désormais
+  sur une copie jetable de l'arbre, avec un parasite ordinaire et un parasite à
+  nom fabriqué.
+
 ## [1.6.0] - 2026-09-17
 
 ### Ajouté
