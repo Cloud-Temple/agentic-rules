@@ -31,6 +31,11 @@ versionnement sémantique.
   au lieu d'être généralisée.
 - `REVIEWERS.md` : les outils MCP de `codex` sont différés. Ils n'apparaissent
   pas dans la liste que le modèle introspecte et restent appelables par leur nom.
+  Mesure du 17 septembre 2026, au niveau de raisonnement par défaut, sur le poste
+  qui porte deux serveurs mémoire : vingt-deux outils visibles, aucun de l'un ou
+  l'autre serveur, et l'appel nommé de `system_whoami` aboutit et rend la réponse
+  complète. Ce compte dépend de la configuration du poste, il reste ici et ne
+  figure pas dans la règle.
   Un relecteur qui se fie à sa liste conclut qu'il n'a pas de mémoire, et le
   prérequis bloquant de `MAIN_RULES.md` arrête la revue avant qu'elle commence.
   Ce que l'on fournit au relecteur doit le dire, et lui laisser la vérification
@@ -40,6 +45,11 @@ versionnement sémantique.
   homonymes. Le relecteur travaille en session non interactive et ne peut pas
   exécuter la branche de « Trouver l'espace du projet » qui demande à
   l'utilisateur de choisir ; lever l'ambiguïté en amont l'en dispense.
+- `REVIEWERS.md` : la lecture seule du relecteur porte aussi sur la mémoire. Le
+  corpus le définissait en lecture seule tout en lui opposant un prérequis exigeant
+  la lecture et l'écriture. Il constate sa lecture, n'écrit pas, et la moitié
+  écriture tient à la preuve d'accès existante que `PROJECT_RULES.md` admet déjà
+  de réutiliser.
 
 ## [1.3.0] - 2026-09-16
 

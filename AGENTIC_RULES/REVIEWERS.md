@@ -37,15 +37,20 @@ dépôts ne produisent pas des verdicts issus de configurations différentes.
   la généraliser à toutes les revues.
 - **Les outils MCP de `codex` sont différés.** Ils n'apparaissent pas dans la
   liste que le modèle introspecte, et ils restent appelables par leur nom.
-  Mesuré au niveau de raisonnement par défaut : vingt-deux outils visibles, aucun
-  des serveurs mémoire configurés, et l'appel nommé d'un outil absent de la liste
-  aboutit. Un relecteur qui se fie à sa liste conclut honnêtement qu'il n'a pas
-  de mémoire, et le prérequis bloquant de `MAIN_RULES.md` arrête la revue avant
+  Un relecteur qui se fie à sa liste conclut honnêtement qu'il n'a pas de
+  mémoire, et le prérequis bloquant de `MAIN_RULES.md` arrête la revue avant
   qu'elle commence. Ce que l'on fournit au relecteur doit donc dire que l'absence
   d'un outil de la liste ne prouve pas son indisponibilité, qu'il faut l'appeler
-  par son nom, et qu'il lui revient de vérifier son propre accès mémoire. Ne
-  jamais l'en dispenser au motif que la session qui délègue l'a déjà fait : ce
-  serait lui demander d'ignorer une règle pour pouvoir juger si elle est tenue.
+  par son nom, et qu'il lui revient de constater son propre accès. Ne jamais l'en
+  dispenser au motif que la session qui délègue l'a déjà fait : ce serait lui
+  demander d'ignorer une règle pour pouvoir juger si elle est tenue.
+- **La lecture seule du relecteur porte aussi sur la mémoire.** Il constate son
+  accès en lecture, par son identité auprès du serveur puis la lecture de
+  l'espace du projet, et il n'écrit aucune note. Le prérequis de `MAIN_RULES.md`
+  demande un accès en lecture et en écriture ; la moitié écriture est établie par
+  la preuve d'accès existante, que `PROJECT_RULES.md` admet de réutiliser plutôt
+  que de créer une note de vérification à chaque session. Une revue n'a pas à
+  laisser de trace dans la banque du projet : son verdict revient par le pilote.
 - **Nommer le serveur mémoire et l'espace** parmi les éléments de contexte
   fournis au relecteur, quand plusieurs serveurs exposent des outils homonymes.
   Le relecteur travaille en session non interactive : il ne peut pas exécuter la
