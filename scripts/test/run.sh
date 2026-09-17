@@ -177,7 +177,7 @@ set_config "$T" instructions_file "../hors-depot.md"
 [ -f "$T/../hors-depot.md" ] && ok "la cible remontante existe vraiment" || ko "la cible remontante existe vraiment"
 out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
 check "un chemin remontant vers un fichier existant échoue" "$rc" "1"
-printf '%s' "$out" | grep -q "CHEMIN SORTANT" && ok "le chemin remontant est nommé" || ko "le chemin remontant est nommé"
+printf '%s' "$out" | grep -q "HORS DEPOT" && ok "le chemin remontant est nommé par sa destination" || ko "le chemin remontant est nommé par sa destination"
 set_config "$T" instructions_file "/etc/passwd"
 out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
 check "un chemin absolu échoue" "$rc" "1"
@@ -208,6 +208,56 @@ set_config "$T" instructions_file "DESIGN/RELEASE-1.0..1.md"
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "un nom de fichier contenant deux points reste conforme" "$rc" "0"
 set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# Un `..` qui revient dans le dépôt n'en sort pas. Le contrôle jugeait sur la
+# chaîne brute, avant toute résolution, et refusait un chemin strictement
+# interne en affirmant une sortie qui n'avait pas lieu.
+set_config "$T" instructions_file "DESIGN/../DESIGN/INSTRUCTIONS.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un .. qui revient dans le dépôt reste conforme" "$rc" "0"
+set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+printf 'énumération du répertoire des règles\n'
+# `find -printf` est une extension GNU. Le find de BSD la refuse, et le contrôle
+# concluait alors à un ajout local au nom vide : un défaut d'outil présenté comme
+# une dérive du dépôt. Le stub reproduit ce refus exactement.
+REAL_FIND="$(command -v find)"
+mkdir -p "$WORK/find-bsd"
+{ printf '#!/bin/sh\n'
+  printf 'for a in "$@"; do\n'
+  printf '  [ "$a" = "-printf" ] || continue\n'
+  printf '  echo "find: -printf: unknown primary or operator" >&2\n'
+  printf '  exit 1\n'
+  printf 'done\n'
+  printf 'exec %s "$@"\n' "$REAL_FIND"
+} > "$WORK/find-bsd/find"
+chmod +x "$WORK/find-bsd/find"
+out="$(PATH="$WORK/find-bsd:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un find sans -printf laisse le contrôle conforme" "$rc" "0"
+printf '%s' "$out" | grep -q "AJOUT LOCAL" && ko "une dérive est inventée par le défaut d'outil" || ok "aucune dérive n'est inventée"
+
+# Le contrôle doit rester utile sous ce find, pas seulement silencieux : un vrai
+# ajout local passerait inaperçu si l'énumération portable ne voyait rien.
+printf 'regle locale du depot\n' > "$T/AGENTIC_RULES/LOCAL_RULES.md"
+out="$(PATH="$WORK/find-bsd:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un find sans -printf détecte toujours un vrai ajout" "$rc" "1"
+printf '%s' "$out" | grep -q "AJOUT LOCAL AGENTIC_RULES/LOCAL_RULES.md" \
+  && ok "l'ajout est nommé sous le find dégradé" || ko "l'ajout est nommé sous le find dégradé"
+rm "$T/AGENTIC_RULES/LOCAL_RULES.md"
+
+# Une énumération qui ne rend rien est un défaut d'outil ou un corpus disparu.
+# Le contrôle doit le dire, et surtout ne pas le traduire en constat de dérive.
+mkdir -p "$WORK/find-muet"
+printf '#!/bin/sh\nexit 0\n' > "$WORK/find-muet/find"
+chmod +x "$WORK/find-muet/find"
+out="$(PATH="$WORK/find-muet:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "une énumération vide fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -q "ENUMERATION VIDE" \
+  && ok "l'énumération vide est nommée pour ce qu'elle est" || ko "l'énumération vide est nommée pour ce qu'elle est"
+printf '%s' "$out" | grep -q "AJOUT LOCAL" \
+  && ko "une absence de données reste présentée comme une dérive" || ok "aucune dérive n'est déduite d'une absence de données"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "la cible reste conforme une fois le find rendu" "$rc" "0"
 
 # La lecture doit tenir compte de la section. Le schéma réutilise déjà `server`
 # sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
