@@ -18,8 +18,26 @@ check(){ if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 (attendu «$3», obtenu �
 git_c() { git -C "$1" -c user.email=test@local -c user.name=test "${@:2}"; }
 
 # Empreinte complète d'une cible : contenu de chaque fichier et arborescence.
-snapshot() { ( cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort
-               cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort ); }
+# Ce harnais reste lié à GNU, et l'assumer : `-printf` et `sha256sum` n'existent
+# pas partout. Mais une empreinte vide rendrait identiques deux cibles
+# quelconques, et les quatre comparaisons qui l'utilisent passeraient sans rien
+# comparer. Échouer bruyamment plutôt que silencieusement. Aucune des cibles
+# comparées n'est légitimement vide.
+snapshot() {
+  local tree sums
+  # La moitié arborescence est celle qui dépend de `-printf`. Si elle se tait,
+  # les comparaisons ne portent plus que sur le contenu des fichiers, et un
+  # changement de type, de mode ou de structure passe inaperçu. Le garde-fou
+  # porte donc sur elle, pas sur la concaténation des deux : la moitié empreinte
+  # continue de produire des lignes et masquerait le silence de la première.
+  # La fonction rend un code, elle ne quitte pas : appelée dans `$(...)`, un
+  # `exit` ne tuerait que le sous-shell et la suite continuerait en vert. C'est
+  # l'appelant qui arrête, et chaque appel est donc suivi de `|| exit 2`.
+  tree="$(cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort)"
+  [ -n "$tree" ] || { printf 'HARNAIS arborescence vide pour %s : find -printf indisponible\n' "$1" >&2; return 2; }
+  sums="$(cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort)"
+  printf '%s\n%s\n' "$tree" "$sums"
+}
 
 # Source git isolée. v0.0.0-test est l'état courant ; v0.0.1-test modifie un
 # fichier du corpus et en retire un autre, pour exercer une vraie montée de
@@ -177,7 +195,7 @@ set_config "$T" instructions_file "../hors-depot.md"
 [ -f "$T/../hors-depot.md" ] && ok "la cible remontante existe vraiment" || ko "la cible remontante existe vraiment"
 out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
 check "un chemin remontant vers un fichier existant échoue" "$rc" "1"
-printf '%s' "$out" | grep -q "CHEMIN SORTANT" && ok "le chemin remontant est nommé" || ko "le chemin remontant est nommé"
+printf '%s' "$out" | grep -q "HORS DEPOT" && ok "le chemin remontant est nommé par sa destination" || ko "le chemin remontant est nommé par sa destination"
 set_config "$T" instructions_file "/etc/passwd"
 out="$("$SCRIPT" check "$T" 2>&1)"; rc=$?
 check "un chemin absolu échoue" "$rc" "1"
@@ -208,6 +226,56 @@ set_config "$T" instructions_file "DESIGN/RELEASE-1.0..1.md"
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "un nom de fichier contenant deux points reste conforme" "$rc" "0"
 set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+# Un `..` qui revient dans le dépôt n'en sort pas. Le contrôle jugeait sur la
+# chaîne brute, avant toute résolution, et refusait un chemin strictement
+# interne en affirmant une sortie qui n'avait pas lieu.
+set_config "$T" instructions_file "DESIGN/../DESIGN/INSTRUCTIONS.md"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "un .. qui revient dans le dépôt reste conforme" "$rc" "0"
+set_config "$T" instructions_file "DESIGN/INSTRUCTIONS.md"
+
+printf 'énumération du répertoire des règles\n'
+# `find -printf` est une extension GNU. Le find de BSD la refuse, et le contrôle
+# concluait alors à un ajout local au nom vide : un défaut d'outil présenté comme
+# une dérive du dépôt. Le stub reproduit ce refus exactement.
+REAL_FIND="$(command -v find)"
+mkdir -p "$WORK/find-bsd"
+{ printf '#!/bin/sh\n'
+  printf 'for a in "$@"; do\n'
+  printf '  [ "$a" = "-printf" ] || continue\n'
+  printf '  echo "find: -printf: unknown primary or operator" >&2\n'
+  printf '  exit 1\n'
+  printf 'done\n'
+  printf 'exec %s "$@"\n' "$REAL_FIND"
+} > "$WORK/find-bsd/find"
+chmod +x "$WORK/find-bsd/find"
+out="$(PATH="$WORK/find-bsd:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un find sans -printf laisse le contrôle conforme" "$rc" "0"
+printf '%s' "$out" | grep -q "AJOUT LOCAL" && ko "une dérive est inventée par le défaut d'outil" || ok "aucune dérive n'est inventée"
+
+# Le contrôle doit rester utile sous ce find, pas seulement silencieux : un vrai
+# ajout local passerait inaperçu si l'énumération portable ne voyait rien.
+printf 'regle locale du depot\n' > "$T/AGENTIC_RULES/LOCAL_RULES.md"
+out="$(PATH="$WORK/find-bsd:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "un find sans -printf détecte toujours un vrai ajout" "$rc" "1"
+printf '%s' "$out" | grep -q "AJOUT LOCAL AGENTIC_RULES/LOCAL_RULES.md" \
+  && ok "l'ajout est nommé sous le find dégradé" || ko "l'ajout est nommé sous le find dégradé"
+rm "$T/AGENTIC_RULES/LOCAL_RULES.md"
+
+# Une énumération qui ne rend rien est un défaut d'outil ou un corpus disparu.
+# Le contrôle doit le dire, et surtout ne pas le traduire en constat de dérive.
+mkdir -p "$WORK/find-muet"
+printf '#!/bin/sh\nexit 0\n' > "$WORK/find-muet/find"
+chmod +x "$WORK/find-muet/find"
+out="$(PATH="$WORK/find-muet:$PATH" "$SCRIPT" check "$T" 2>&1)"; rc=$?
+check "une énumération vide fait refuser" "$rc" "1"
+printf '%s' "$out" | grep -q "ENUMERATION VIDE" \
+  && ok "l'énumération vide est nommée pour ce qu'elle est" || ko "l'énumération vide est nommée pour ce qu'elle est"
+printf '%s' "$out" | grep -q "AJOUT LOCAL" \
+  && ko "une absence de données reste présentée comme une dérive" || ok "aucune dérive n'est déduite d'une absence de données"
+"$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
+check "la cible reste conforme une fois le find rendu" "$rc" "0"
 
 # La lecture doit tenir compte de la section. Le schéma réutilise déjà `server`
 # sous memory.live et sous memory.graph ; une lecture par nom terminal rendrait
@@ -276,10 +344,11 @@ check "update refuse un dépôt sans corpus" "$rc" "1"
 "$SCRIPT" check "$T2" >/dev/null 2>&1; rc=$?
 check "check refuse un dépôt sans corpus" "$rc" "1"
 printf 'instructions maison a ne pas perdre\n' > "$T2/AGENTS.md"
-before_snap="$(snapshot "$T2")"
+before_snap="$(snapshot "$T2")" || exit 2
 "$SCRIPT" install "$T2" --ref v0.0.0-test --source "$SRC" >/dev/null 2>&1; rc=$?
 check "install refuse d'écraser un fichier existant" "$rc" "1"
-[ "$(snapshot "$T2")" = "$before_snap" ] && ok "le refus laisse la cible strictement inchangée" || ko "le refus laisse la cible strictement inchangée"
+after_snap="$(snapshot "$T2")" || exit 2
+[ "$after_snap" = "$before_snap" ] && ok "le refus laisse la cible strictement inchangée" || ko "le refus laisse la cible strictement inchangée"
 "$SCRIPT" install "$T2" --ref v0.0.0-test --source "$SRC" --force >/dev/null 2>&1; rc=$?
 check "--force installe malgré le conflit" "$rc" "0"
 T3="$WORK/depot trois"; mkdir -p "$T3"
@@ -323,12 +392,13 @@ check "une source injoignable fait échouer --remote" "$rc" "1"
 printf 'MANIFEST hostile\n'
 printf 'a ne pas supprimer\n' > "$WORK/temoin externe.txt"
 printf '../temoin externe.txt\n' >> "$T5/AGENTIC_RULES/MANIFEST"
-before_snap="$(snapshot "$T5")"
+before_snap="$(snapshot "$T5")" || exit 2
 out="$("$SCRIPT" update "$T5" --ref v0.0.0-test --source "$SRC" 2>&1)"; rc=$?
 check "un chemin remontant fait échouer la mise à jour" "$rc" "1"
 printf '%s' "$out" | grep -q "chemin remontant interdit" && ok "l'échec est bien celui du chemin remontant" || ko "l'échec est bien celui du chemin remontant"
 [ -f "$WORK/temoin externe.txt" ] && ok "le fichier hors cible survit" || ko "le fichier hors cible survit"
-[ "$(snapshot "$T5")" = "$before_snap" ] && ok "la cible reste strictement inchangée" || ko "la cible reste strictement inchangée"
+after_snap="$(snapshot "$T5")" || exit 2
+[ "$after_snap" = "$before_snap" ] && ok "la cible reste strictement inchangée" || ko "la cible reste strictement inchangée"
 
 printf 'retour arrière\n'
 T6="$WORK/depot six"; mkdir -p "$T6"
@@ -339,10 +409,11 @@ fill_values "$T6"
 rm "$T6/AGENTIC_RULES/project.config.example.yml"
 mkdir -p "$T6/AGENTIC_RULES/project.config.example.yml/occupe"
 printf 'x\n' > "$T6/AGENTIC_RULES/project.config.example.yml/occupe/x"
-before_snap="$(snapshot "$T6")"
+before_snap="$(snapshot "$T6")" || exit 2
 "$SCRIPT" update "$T6" --ref v0.0.1-test --source "$SRC" >/dev/null 2>&1; rc=$?
 check "une bascule impossible échoue" "$rc" "1"
-[ "$(snapshot "$T6")" = "$before_snap" ] \
+after_snap="$(snapshot "$T6")" || exit 2
+[ "$after_snap" = "$before_snap" ] \
   && ok "la cible est rendue strictement intacte, contenus, types et modes" \
   || ko "la cible est rendue strictement intacte, contenus, types et modes"
 grep -q "ligne ajoutee en v0.0.1" "$T6/AGENTIC_RULES/REVIEWERS.md" \
@@ -352,12 +423,13 @@ grep -q "ligne ajoutee en v0.0.1" "$T6/AGENTIC_RULES/REVIEWERS.md" \
 # le quatrieme fichier de la charge utile, les trois premiers sont deja poses.
 T7="$WORK/depot sept"; mkdir -p "$T7"
 printf 'ce n est pas un repertoire\n' > "$T7/AGENTIC_RULES"
-before_snap="$(snapshot "$T7")"
+before_snap="$(snapshot "$T7")" || exit 2
 out="$("$SCRIPT" install "$T7" --ref v0.0.0-test --source "$SRC" 2>&1)"; rc=$?
 check "un parent impossible fait échouer l'installation" "$rc" "1"
 printf '%s' "$out" | grep -q "répertoire parent impossible" && ok "l'échec est bien celui du parent" || ko "l'échec est bien celui du parent"
 [ -e "$T7/AGENTS.md" ] && ko "les fichiers déjà posés sont retirés" || ok "les fichiers déjà posés sont retirés"
-[ "$(snapshot "$T7")" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
+after_snap="$(snapshot "$T7")" || exit 2
+[ "$after_snap" = "$before_snap" ] && ok "un parent impossible ne laisse pas de corpus hybride" || ko "un parent impossible ne laisse pas de corpus hybride"
 
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

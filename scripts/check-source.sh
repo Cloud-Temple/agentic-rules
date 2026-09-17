@@ -25,7 +25,7 @@ allowed="$(printf '%s\n' "$manifest" | sed -n 's|^AGENTIC_RULES/||p')"$'\n'"proj
 while IFS= read -r base; do
   printf '%s\n' "$allowed" | grep -qx "$base" \
     || { printf 'fichier parasite dans AGENTIC_RULES/ : %s\n' "$base"; rc=1; }
-done < <(cd AGENTIC_RULES && find . -mindepth 1 -printf '%P\n' | sort)
+done < <(cd AGENTIC_RULES && find . -mindepth 1 | sed 's|^\./||' | sort)
 
 [ -x AGENTIC_RULES/agentic-rules.sh ] || { printf 'le script distribué n est pas exécutable\n'; rc=1; }
 

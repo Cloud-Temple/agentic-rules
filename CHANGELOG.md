@@ -3,6 +3,64 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.5.0] - 2026-09-17
+
+### Corrigé
+
+- `agentic-rules.sh` : l'énumération du répertoire des règles n'utilise plus
+  `find -printf`, une extension GNU que le `find` de BSD refuse. Sur macOS la
+  substitution rendait une chaîne vide, la boucle tournait une fois sur cette
+  ligne vide, et le contrôle annonçait `AJOUT LOCAL AGENTIC_RULES/` suivi d'un
+  nom de fichier vide, puis `non conforme`. Un défaut d'outil se lisait comme une
+  dérive du dépôt, et envoyait le contributeur chercher un fichier parasite qui
+  n'existait pas. `find . -mindepth 1 | sed` donne le même résultat des deux
+  côtés. Signalé en #15 depuis une session macOS.
+- `agentic-rules.sh` : une énumération qui ne rend aucune ligne est désormais
+  nommée `ENUMERATION VIDE`, et ne conclut plus à une dérive. Une absence de
+  données n'est pas une preuve. Un dépôt réellement vidé de `AGENTIC_RULES/`
+  produisait le même symptôme par un autre chemin.
+- `agentic-rules.sh` : un `..` qui revient dans le dépôt n'est plus refusé comme
+  s'il en sortait. Le contrôle testait le motif sur la chaîne brute, avant toute
+  résolution, si bien que `DESIGN/../DESIGN/x.md` était déclaré sortant alors
+  qu'il désigne un fichier interne. La branche suivante faisait déjà le travail
+  correctement, en résolvant les liens et en comparant à la racine : le
+  diagnostic est maintenant `HORS DEPOT`, rendu par la résolution, et il ne
+  s'applique qu'aux chemins qui sortent vraiment. Signalé en #9. La règle de
+  `MAIN_RULES.md` parlait déjà d'un chemin qui remonte hors de la racine, pas
+  d'un chemin qui contient `..` : c'est le script qui divergeait de la règle.
+
+### Ajouté
+
+- Neuf assertions. Un `find` interposé qui refuse `-printf` comme celui de BSD,
+  sous lequel le contrôle doit rester conforme **et** continuer à détecter un
+  vrai ajout local en le nommant. Un `find` muet, sous lequel le contrôle doit
+  refuser en disant `ENUMERATION VIDE` sans jamais parler de dérive. Et un `..`
+  interne qui doit passer pendant qu'un `..` sortant reste refusé.
+  Six de ces neuf assertions tombent contre le script d'avant correctif. Les
+  trois autres ne discriminent pas seules, et le dire vaut mieux que compter
+  neuf preuves : sous l'ancien code la boucle voyait toujours sa ligne vide
+  fantôme, donc le contrôle refusait de toute façon, pour la mauvaise raison.
+  Ce sont les assertions voisines, sur le nom du fichier et sur le libellé de
+  l'échec, qui font la différence. La troisième est un contrôle de propreté qui
+  n'a jamais eu vocation à discriminer.
+  Une septième assertion tombe aussi, mais elle existait déjà : c'est celle du
+  chemin remontant, dont l'attendu passe de `CHEMIN SORTANT` à `HORS DEPOT`.
+- `scripts/test/run.sh` : l'empreinte de comparaison échoue bruyamment si sa
+  moitié arborescence ne rend rien. Elle reste liée à GNU, et le harnais
+  l'assume. Sous un `find` sans `-printf`, cette moitié se taisait pendant que
+  les empreintes de contenu continuaient de sortir : les quatre comparaisons qui
+  s'en servent ne voyaient plus ni changement de type, ni de mode, ni de
+  structure, et passaient en ne comparant que le contenu. Mesuré, pas supposé.
+  Le garde-fou porte sur cette moitié précise, parce qu'un contrôle global sur la
+  concaténation n'aurait jamais rien détecté. Et il arrête la suite, mesuré : la
+  fonction rend un code que chaque appelant vérifie. Quitter depuis la fonction
+  ne servait à rien, elle n'est appelée que dans des substitutions de commande,
+  et l'arrêt n'y tuait que le sous-shell pendant que la suite finissait en vert.
+- `check-source.sh` portait le même `find -printf` que le script distribué. Il
+  n'est pas dans la charge utile et la CI de la source tourne sur Linux, mais
+  laisser le défaut dans l'outil qui valide la source pendant qu'on le corrige
+  dans l'outil distribué n'avait pas de sens.
+
 ## [1.4.0] - 2026-09-17
 
 ### Modifié
