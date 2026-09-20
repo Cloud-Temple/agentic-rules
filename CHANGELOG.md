@@ -3,6 +3,15 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.8.0] - 2026-09-20
+
+### Modifié
+
+- `AGENTIC_RULES/REVIEWERS.md` : mise à jour des modèles de relecture indépendante :
+  - Anthropic : `claude fable 5.1 high`
+  - OpenAI : `gpt 5.6 astra high`
+  - LLMaaS : `nemotron-3-super:120b`
+
 ## [1.7.0] - 2026-09-17
 
 ### Corrigé
