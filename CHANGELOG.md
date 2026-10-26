@@ -3,6 +3,17 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [Unreleased]
+
+### Modifié
+
+- `REVIEWERS.md` : Claude Sonnet 5.5 high et GPT 6.1 Sol high remplacent
+  Claude Fable 5.1 high et GPT 5.6 Astra high. Le pilote configure explicitement
+  le niveau `high` dans l'outil et vérifie le réglage retourné ; le défaut du
+  fournisseur ne suffit pas. La règle d'indépendance reste applicable : un
+  pilote Sol 6.1 ne peut pas utiliser Sol 6.1 pour sa revue indépendante et
+  doit changer de fournisseur ou signaler la revue comme indisponible.
+
 ## [1.8.0] - 2026-09-20
 
 ### Modifié
