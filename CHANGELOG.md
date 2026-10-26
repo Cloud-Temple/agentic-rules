@@ -19,7 +19,7 @@ et [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
   désactivent uniquement cette échéance ; les contrôles à la reprise et aux
   jalons s'appliquent. Le contrôle ne déclenche une consolidation que si elle
   est nécessaire et ne crée aucun minuteur.
-- [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Sonnet
+- [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Opus
   5.5 high et GPT 6.1 Sol high deviennent les modèles de revue pour Claude et
   Codex. Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
   le réglage retourné. Le relecteur doit toujours être différent du pilote.
