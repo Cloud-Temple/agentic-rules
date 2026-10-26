@@ -93,7 +93,7 @@ passer : autant que ce soit écrit plutôt que découvert.
 ./scripts/test/run.sh
 ```
 
-Cinquante-quatre assertions sur une source git isolée à deux versions taggées et des
+Cent onze assertions sur une source git isolée à deux versions taggées et des
 dépôts consommateurs jetables, sans accès réseau, avec des chemins contenant une
 espace. Elles couvrent l'installation, le refus d'écraser un fichier existant,
 la détection d'un fichier modifié puis supprimé, les trois contournements du
@@ -114,6 +114,16 @@ sans quoi un dépôt correctement configuré resterait non conforme à vie.
 
 ## Versionnement
 
-Ce dépôt suit le versionnement sémantique à partir de `v1.0.0`. Un changement
-qui rend une règle plus contraignante ou déplace un fichier est une version
-majeure : les dépôts consommateurs doivent alors relire avant de mettre à jour.
+Ce dépôt suit le versionnement sémantique à partir de `v1.0.0`.
+
+- Une version majeure introduit une incompatibilité réelle avec un contrat
+  existant : outil ou configuration devenus incompatibles, chemin distribué
+  supprimé ou déplacé sans maintien de compatibilité.
+- Une version mineure ajoute une évolution compatible, y compris une obligation
+  de pilotage qui conserve les contrats d'outils, les configurations et les
+  chemins distribués existants.
+- Une version corrective corrige un défaut sans introduire de nouveau contrat.
+
+Toute évolution de comportement est décrite dans le changelog. Les dépôts
+consommateurs doivent relire les règles modifiées avant une mise à jour, même
+mineure ; compatible ne signifie pas sans effet sur le travail de l'agent.

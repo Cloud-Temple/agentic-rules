@@ -3,7 +3,7 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
-## [2.0.0] - À publier
+## [1.9.0] - À publier
 
 Version préparée, non publiée. Les changements ci-dessous dépendent de
 l'intégration des PR [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24)
@@ -22,14 +22,22 @@ et [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
 - [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Opus
   5.5 high et GPT 6.1 Sol high deviennent les modèles de revue pour Claude et
   Codex. Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
-  le réglage retourné. Le relecteur doit toujours être différent du pilote.
+  le réglage retourné. Cette obligation remplace la consigne précédente de ne
+  pas forcer le niveau de raisonnement : c'est une évolution de comportement.
+  Le relecteur doit toujours être différent du pilote.
+- Le versionnement réserve les majeures aux incompatibilités réelles ; les
+  évolutions compatibles, y compris les nouvelles obligations de pilotage,
+  relèvent des mineures. Les consommateurs doivent relire les règles modifiées
+  même lors d'une mise à jour mineure.
 
 ### Compatibilité
 
 Le contrôle régulier et la transmission explicite du niveau `high` renforcent
-les obligations du corpus et justifient une version majeure. Les dépôts
-consommateurs doivent relire les règles avant leur mise à
-jour. Leur configuration locale est préservée ; l'activation de l'échéance pour
+les obligations du corpus sans supprimer de contrat d'outil, de clé de
+configuration ni de chemin distribué existant : la version est mineure selon
+la convention précisée dans cette version. Les dépôts consommateurs doivent
+relire les règles avant leur mise à jour. Leur configuration locale est
+préservée ; l'activation de l'échéance pour
 les longues sessions se fait en ajoutant la nouvelle clé et en passant
 `schema_version` à `3`.
 
