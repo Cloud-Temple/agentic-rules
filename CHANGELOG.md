@@ -19,6 +19,13 @@ versionnement sémantique.
   et aux jalons s'appliquent. Le contrôle shell ne valide pas ce nouveau champ ;
   sa lecture et sa validation relèvent de l'agent.
 
+- `REVIEWERS.md` : Claude Opus 5.5 high et GPT 6.1 Sol high remplacent
+  Claude Fable 5.1 high et GPT 5.6 Astra high. Le pilote configure explicitement
+  le niveau `high` dans l'outil et vérifie le réglage retourné ; le défaut du
+  fournisseur ne suffit pas. La règle d'indépendance reste applicable : un
+  pilote Sol 6.1 ne peut pas utiliser Sol 6.1 pour sa revue indépendante et
+  doit changer de fournisseur ou signaler la revue comme indisponible.
+
 Ces obligations de pilotage sont préparées pour la version mineure 1.9.0,
 selon la convention de compatibilité précisée dans la PR #27. Les contrats
 d'outils, configurations et chemins distribués existants sont conservés ;
