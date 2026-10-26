@@ -26,8 +26,9 @@ et [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
 
 ### Compatibilité
 
-Le contrôle régulier renforce les obligations du corpus et justifie une version
-majeure. Les dépôts consommateurs doivent relire les règles avant leur mise à
+Le contrôle régulier et la transmission explicite du niveau `high` renforcent
+les obligations du corpus et justifient une version majeure. Les dépôts
+consommateurs doivent relire les règles avant leur mise à
 jour. Leur configuration locale est préservée ; l'activation de l'échéance pour
 les longues sessions se fait en ajoutant la nouvelle clé et en passant
 `schema_version` à `3`.
