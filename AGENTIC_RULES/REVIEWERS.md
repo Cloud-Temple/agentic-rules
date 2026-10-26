@@ -9,7 +9,7 @@ par la clé `review.reviewer_provider` de `project.config.yml`.
 
 | Clé | Fournisseur | Modèle | Contrainte d'invocation |
 | --- | --- | --- | --- |
-| `claude` | Anthropic | `claude sonnet 5.5 high` | Session distincte, lecture seule, invocation non interactive et bornée. |
+| `claude` | Anthropic | `claude opus 5.5 high` | Session distincte, lecture seule, invocation non interactive et bornée. |
 | `codex` | OpenAI | `gpt 6.1 sol high` | Les outils MCP n'apparaissent pas dans la liste visible du modèle et restent appelables par leur nom ; voir les règles d'emploi. |
 | `llmaas` | Cloud Temple LLMaaS (SecNumCloud) | `nemotron-3-super:120b` | Modèle de raisonnement avancé, endpoint `api.ai.cloud-temple.com`. |
 

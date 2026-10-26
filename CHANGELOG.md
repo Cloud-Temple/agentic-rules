@@ -7,7 +7,7 @@ versionnement sémantique.
 
 ### Modifié
 
-- `REVIEWERS.md` : Claude Sonnet 5.5 high et GPT 6.1 Sol high remplacent
+- `REVIEWERS.md` : Claude Opus 5.5 high et GPT 6.1 Sol high remplacent
   Claude Fable 5.1 high et GPT 5.6 Astra high. Le pilote configure explicitement
   le niveau `high` dans l'outil et vérifie le réglage retourné ; le défaut du
   fournisseur ne suffit pas. La règle d'indépendance reste applicable : un
