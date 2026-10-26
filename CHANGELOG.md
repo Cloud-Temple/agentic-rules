@@ -3,6 +3,25 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [Unreleased]
+
+### Modifié
+
+- `PROJECT_RULES.md` : contrôle de la banque à la reprise, aux jalons et selon
+  une échéance configurable pendant les longues sessions, porté par un seul
+  coordinateur ou mainteneur annoncé par espace. La consolidation reste
+  conditionnée au besoin ; aucun minuteur ni gain de latence n'est présumé.
+  Les soumissions asynchrones et les travaux disparus de la file sont suivis
+  sans confondre demande, absence de statut et réussite.
+- Le modèle de configuration passe au schéma 3 et propose un intervalle de
+  contrôle de `24` heures. Les anciennes configurations sans la clé restent
+  utilisables : l'échéance prolongée est désactivée, les contrôles à la reprise
+  et aux jalons s'appliquent. Le contrôle shell ne valide pas ce nouveau champ ;
+  sa lecture et sa validation relèvent de l'agent.
+
+Ce renforcement des règles impose une prochaine version majeure selon le
+versionnement du corpus. Aucune version n'est publiée par ce changement.
+
 ## [1.8.0] - 2026-09-20
 
 ### Modifié
