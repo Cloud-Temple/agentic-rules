@@ -13,7 +13,7 @@ project:
 memory:
   live:
     server: my-live-memory
-    space_id: starter-kit
+    space_id: agentic-rules
   graph:
     server: disabled
     memory_id: disabled
