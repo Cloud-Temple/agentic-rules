@@ -3,12 +3,10 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
-## [1.9.0] - À publier
+## [1.9.0] - 2026-10-26
 
-Version préparée, non publiée. La PR
-[#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) est intégrée ; cette
-préparation attend encore l'intégration de la PR
-[#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
+Les PR [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) et
+[#26](https://github.com/Cloud-Temple/agentic-rules/pull/26) sont intégrées.
 
 ### Modifié
 
