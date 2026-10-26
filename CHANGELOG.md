@@ -3,34 +3,53 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
-## [Unreleased]
+## [1.9.0] - À publier
+
+Version préparée, non publiée. La PR
+[#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) est intégrée ; cette
+préparation attend encore l'intégration de la PR
+[#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
 
 ### Modifié
 
-- `PROJECT_RULES.md` : contrôle de la banque à la reprise, aux jalons et selon
-  une échéance configurable pendant les longues sessions, porté par un seul
-  coordinateur ou mainteneur annoncé par espace. La consolidation reste
-  conditionnée au besoin ; aucun minuteur ni gain de latence n'est présumé.
-  Les soumissions asynchrones et les travaux disparus de la file sont suivis
-  sans confondre demande, absence de statut et réussite.
-- Le modèle de configuration passe au schéma 3 et propose un intervalle de
-  contrôle de `24` heures. Les anciennes configurations sans la clé restent
-  utilisables : l'échéance prolongée est désactivée, les contrôles à la reprise
-  et aux jalons s'appliquent. Le contrôle shell ne valide pas ce nouveau champ ;
-  sa lecture et sa validation relèvent de l'agent.
+- [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26) : contrôle de la
+  banque Live Memory à la reprise, aux jalons et selon une échéance configurable
+  pendant les longues sessions, sous la responsabilité d'un coordinateur ou
+  mainteneur annoncé. Le modèle de configuration passe au schéma 3 et propose
+  un intervalle de `24` heures. Les configurations antérieures sans cette clé
+  désactivent uniquement cette échéance ; les contrôles à la reprise et aux
+  jalons s'appliquent. Le contrôle ne déclenche une consolidation que si elle
+  est nécessaire et ne crée aucun minuteur. Le suivi des travaux asynchrones
+  distingue une soumission, une disparition de la file et une réussite prouvée.
+  Le contrôle shell ne valide pas le nouveau réglage ; sa lecture relève de
+  l'agent. Aucun gain de latence n'est présumé.
+- [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Opus
+  5.5 high et GPT 6.1 Sol high deviennent les modèles de revue pour Claude et
+  Codex, en remplacement de Claude Fable 5.1 high et GPT 5.6 Astra high.
+  Un pilote Sol 6.1 doit utiliser un autre fournisseur pour sa revue indépendante
+  ou signaler son indisponibilité.
+  Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
+  le réglage retourné. Cette obligation remplace la consigne précédente de ne
+  pas forcer le niveau de raisonnement : c'est une évolution de comportement.
+  Le relecteur doit toujours être différent du pilote.
+- Le versionnement réserve les majeures aux incompatibilités réelles ; les
+  évolutions compatibles, y compris les nouvelles obligations de pilotage,
+  relèvent des mineures. Les consommateurs doivent relire les règles modifiées
+  même lors d'une mise à jour mineure.
+  Cette version remplace ainsi la convention de 1.8.0, qui imposait une majeure
+  pour toute règle plus contraignante : une nouvelle obligation compatible
+  relève désormais d'une mineure.
 
-- `REVIEWERS.md` : Claude Opus 5.5 high et GPT 6.1 Sol high remplacent
-  Claude Fable 5.1 high et GPT 5.6 Astra high. Le pilote configure explicitement
-  le niveau `high` dans l'outil et vérifie le réglage retourné ; le défaut du
-  fournisseur ne suffit pas. La règle d'indépendance reste applicable : un
-  pilote Sol 6.1 ne peut pas utiliser Sol 6.1 pour sa revue indépendante et
-  doit changer de fournisseur ou signaler la revue comme indisponible.
+### Compatibilité
 
-Ces obligations de pilotage sont préparées pour la version mineure 1.9.0,
-selon la convention de compatibilité précisée dans la PR #27. Les contrats
-d'outils, configurations et chemins distribués existants sont conservés ;
-les consommateurs doivent néanmoins relire les règles modifiées.
-Aucune version n'est publiée par ce changement.
+Le contrôle régulier et la transmission explicite du niveau `high` renforcent
+les obligations du corpus sans supprimer de contrat d'outil, de clé de
+configuration ni de chemin distribué existant : la version est mineure selon
+la convention précisée dans cette version. Les dépôts consommateurs doivent
+relire les règles avant leur mise à jour. Leur configuration locale est
+préservée ; l'activation de l'échéance pour
+les longues sessions se fait en ajoutant la nouvelle clé et en passant
+`schema_version` à `3`.
 
 ## [1.8.0] - 2026-09-20
 
