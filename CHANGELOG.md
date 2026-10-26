@@ -3,6 +3,35 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [2.0.0] - À publier
+
+Version préparée, non publiée. Les changements ci-dessous dépendent de
+l'intégration des PR [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24)
+et [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
+
+### Modifié
+
+- [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26) : contrôle de la
+  banque Live Memory à la reprise, aux jalons et selon une échéance configurable
+  pendant les longues sessions, sous la responsabilité d'un coordinateur ou
+  mainteneur annoncé. Le modèle de configuration passe au schéma 3 et propose
+  un intervalle de `24` heures. Les configurations antérieures sans cette clé
+  désactivent uniquement cette échéance ; les contrôles à la reprise et aux
+  jalons s'appliquent. Le contrôle ne déclenche une consolidation que si elle
+  est nécessaire et ne crée aucun minuteur.
+- [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Sonnet
+  5.5 high et GPT 6.1 Sol high deviennent les modèles de revue pour Claude et
+  Codex. Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
+  le réglage retourné. Le relecteur doit toujours être différent du pilote.
+
+### Compatibilité
+
+Le contrôle régulier renforce les obligations du corpus et justifie une version
+majeure. Les dépôts consommateurs doivent relire les règles avant leur mise à
+jour. Leur configuration locale est préservée ; l'activation de l'échéance pour
+les longues sessions se fait en ajoutant la nouvelle clé et en passant
+`schema_version` à `3`.
+
 ## [1.8.0] - 2026-09-20
 
 ### Modifié
