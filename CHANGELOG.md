@@ -5,9 +5,10 @@ versionnement sémantique.
 
 ## [1.9.0] - À publier
 
-Version préparée, non publiée. Les changements ci-dessous dépendent de
-l'intégration des PR [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24)
-et [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
+Version préparée, non publiée. La PR
+[#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) est intégrée ; cette
+préparation attend encore l'intégration de la PR
+[#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
 
 ### Modifié
 
@@ -18,7 +19,10 @@ et [#26](https://github.com/Cloud-Temple/agentic-rules/pull/26).
   un intervalle de `24` heures. Les configurations antérieures sans cette clé
   désactivent uniquement cette échéance ; les contrôles à la reprise et aux
   jalons s'appliquent. Le contrôle ne déclenche une consolidation que si elle
-  est nécessaire et ne crée aucun minuteur.
+  est nécessaire et ne crée aucun minuteur. Le suivi des travaux asynchrones
+  distingue une soumission, une disparition de la file et une réussite prouvée.
+  Le contrôle shell ne valide pas le nouveau réglage ; sa lecture relève de
+  l'agent. Aucun gain de latence n'est présumé.
 - [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Opus
   5.5 high et GPT 6.1 Sol high deviennent les modèles de revue pour Claude et
   Codex. Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
