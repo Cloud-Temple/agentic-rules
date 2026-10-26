@@ -19,8 +19,11 @@ versionnement sémantique.
   et aux jalons s'appliquent. Le contrôle shell ne valide pas ce nouveau champ ;
   sa lecture et sa validation relèvent de l'agent.
 
-Ce renforcement des règles impose une prochaine version majeure selon le
-versionnement du corpus. Aucune version n'est publiée par ce changement.
+Ces obligations de pilotage sont préparées pour la version mineure 1.9.0,
+selon la convention de compatibilité précisée dans la PR #27. Les contrats
+d'outils, configurations et chemins distribués existants sont conservés ;
+les consommateurs doivent néanmoins relire les règles modifiées.
+Aucune version n'est publiée par ce changement.
 
 ## [1.8.0] - 2026-09-20
 
