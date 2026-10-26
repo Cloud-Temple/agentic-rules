@@ -7,12 +7,30 @@ versionnement sémantique.
 
 ### Modifié
 
+- `PROJECT_RULES.md` : contrôle de la banque à la reprise, aux jalons et selon
+  une échéance configurable pendant les longues sessions, porté par un seul
+  coordinateur ou mainteneur annoncé par espace. La consolidation reste
+  conditionnée au besoin ; aucun minuteur ni gain de latence n'est présumé.
+  Les soumissions asynchrones et les travaux disparus de la file sont suivis
+  sans confondre demande, absence de statut et réussite.
+- Le modèle de configuration passe au schéma 3 et propose un intervalle de
+  contrôle de `24` heures. Les anciennes configurations sans la clé restent
+  utilisables : l'échéance prolongée est désactivée, les contrôles à la reprise
+  et aux jalons s'appliquent. Le contrôle shell ne valide pas ce nouveau champ ;
+  sa lecture et sa validation relèvent de l'agent.
+
 - `REVIEWERS.md` : Claude Opus 5.5 high et GPT 6.1 Sol high remplacent
   Claude Fable 5.1 high et GPT 5.6 Astra high. Le pilote configure explicitement
   le niveau `high` dans l'outil et vérifie le réglage retourné ; le défaut du
   fournisseur ne suffit pas. La règle d'indépendance reste applicable : un
   pilote Sol 6.1 ne peut pas utiliser Sol 6.1 pour sa revue indépendante et
   doit changer de fournisseur ou signaler la revue comme indisponible.
+
+Ces obligations de pilotage sont préparées pour la version mineure 1.9.0,
+selon la convention de compatibilité précisée dans la PR #27. Les contrats
+d'outils, configurations et chemins distribués existants sont conservés ;
+les consommateurs doivent néanmoins relire les règles modifiées.
+Aucune version n'est publiée par ce changement.
 
 ## [1.8.0] - 2026-09-20
 

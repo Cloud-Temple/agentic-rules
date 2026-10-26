@@ -87,6 +87,30 @@ revue du diff, où les deux modifications sont visibles côte à côte, et le mo
 exactement ce scénario, y compris le fait que le contrôle local le laisse
 passer : autant que ce soit écrit plutôt que découvert.
 
+## Contrôler régulièrement la banque mémoire
+
+Le coordinateur ou mainteneur annoncé pour l'espace contrôle la banque à la
+reprise et aux jalons. Pour les longues sessions, le modèle de configuration
+en schéma 3 propose, sous `memory.live` :
+
+```yaml
+consolidation_check_interval_hours: 24
+```
+
+La valeur est un entier strictement positif en heures, ajustable selon l'usage.
+`disabled` désactive seulement cette échéance. Une configuration antérieure au
+schéma 3 sans la clé vaut `disabled` ; pour activer l'échéance, ajouter la clé
+et passer `schema_version` à `3`. Le contrôle shell ne valide pas ce réglage :
+l'agent applique les règles de lecture de `PROJECT_RULES.md`.
+
+Le contrôle examine les nouveautés, la fraîcheur du résumé et les budgets de
+la banque avant de décider d'une consolidation. Il ne lance pas une
+consolidation à chaque réveil. Le texte ne crée aucun minuteur : sans rappel
+ou superviseur existant et autorisé, le contrôle attend une occasion de travail.
+Sans état de suivi fiable conservé entre sessions, il est refait à la reprise.
+Une personne qui reprend la maintenance suit le même contrôle décrit dans
+`AGENTIC_RULES/PROJECT_RULES.md`, avec les outils exposés par son service.
+
 ## Tests
 
 ```bash
