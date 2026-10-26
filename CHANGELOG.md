@@ -25,7 +25,10 @@ préparation attend encore l'intégration de la PR
   l'agent. Aucun gain de latence n'est présumé.
 - [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) : Claude Opus
   5.5 high et GPT 6.1 Sol high deviennent les modèles de revue pour Claude et
-  Codex. Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
+  Codex, en remplacement de Claude Fable 5.1 high et GPT 5.6 Astra high.
+  Un pilote Sol 6.1 doit utiliser un autre fournisseur pour sa revue indépendante
+  ou signaler son indisponibilité.
+  Le pilote transmet explicitement le niveau `high` à l'outil et vérifie
   le réglage retourné. Cette obligation remplace la consigne précédente de ne
   pas forcer le niveau de raisonnement : c'est une évolution de comportement.
   Le relecteur doit toujours être différent du pilote.
@@ -33,6 +36,9 @@ préparation attend encore l'intégration de la PR
   évolutions compatibles, y compris les nouvelles obligations de pilotage,
   relèvent des mineures. Les consommateurs doivent relire les règles modifiées
   même lors d'une mise à jour mineure.
+  Cette version remplace ainsi la convention de 1.8.0, qui imposait une majeure
+  pour toute règle plus contraignante : une nouvelle obligation compatible
+  relève désormais d'une mineure.
 
 ### Compatibilité
 
