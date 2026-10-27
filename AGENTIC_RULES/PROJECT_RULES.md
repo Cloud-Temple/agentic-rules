@@ -117,7 +117,8 @@ la référence 1.6.4/1.6.5, certaines voies d'écriture partagées, dont les not
 SHORT et la consolidation courante, restent refusées même sur un espace sain.
 Un refus de route ou de voie non prise en charge impose l'arrêt : ne pas
 contourner par un appel opérateur, une écriture MID/S3 ou un ancien endpoint.
-Une admission de travail peut précéder ce refus dans le worker.
+Si la route change après une admission valide, le worker peut refuser à son
+tour ; une route déjà partagée est refusée avant cette admission.
 
 La préparation, le couplage, la resynchronisation et l'éviction sont des
 opérations d'administration distinctes. Aucun outil MCP `mesh_*` n'est exposé
@@ -236,7 +237,10 @@ Consigner les décisions humaines qui guident le travail et les questions
 bloquantes utiles avant d'agir ou de les transmettre. En fin de bloc
 significatif, laisser un bilan bref avec état prouvé, points ouverts et
 prochaine action, pour qu'un autre agent puisse reprendre. Ce n'est ni une
-copie du chat ni une note supplémentaire à chaque micro-action.
+copie du chat ni une note supplémentaire à chaque micro-action. Si l'écriture
+SHORT est refusée, signaler dans la réponse finale les éléments de passation
+non enregistrés ; ne pas les présenter comme sauvegardés ni utiliser une
+écriture alternative. Le travail courant s'arrête selon le blocage mémoire.
 
 Une note porte un sujet, sa source et ses conséquences. Éviter les doublons,
 secrets, données personnelles de clients, extraits sensibles de production,
@@ -328,7 +332,7 @@ Les préimages vérifiées de compaction peuvent alimenter automatiquement une
 archive historique LONG. Ce worker et son attente durable sont distincts de
 la file de consolidation volatile. Une capture peut exister après une
 compaction échouée : elle ne prouve pas que MID a été remplacé. Des captures
-restent accessibles même après indexation ; les effacer n'est pas un nettoyage
+restent conservées même après indexation ; les effacer n'est pas un nettoyage
 ordinaire de la mémoire.
 
 `long_status.mid_archive_projection` sert au diagnostic ciblé d'un retard ou
@@ -404,7 +408,11 @@ noms natifs de droite, s'ils sont exposés, et jamais un ancien serveur.
 | `graph_connect`, `graph_disconnect` | `long_connect`, `long_disconnect`, opérateur |
 
 `mid_write`, `mid_delete`, `long_connect` et `long_disconnect` appartiennent
-à la surface opérateur. Il en va de même pour `bank_compact`, `mid_archive_retry`,
+à la surface opérateur. La liste suivante est indicative : la classification
+d'audience du contrat de la version fait foi, pas le seul droit `write` ou
+`manage`, ni la présence d'un nom dans la découverte. Pour un outil non cité,
+vérifier ce contrat avant de le traiter comme un outil courant.
+Cela concerne notamment `bank_compact`, `mid_archive_retry`,
 `bank_repair`, `long_reindex`, les `backup_*`, `ontology_*`, `admin_*`, les
 mutations `space_update`/`space_update_rules`/`space_delete` et l'ingestion
 `long_ingest_async`. Ne pas les appeler dans une mission de développement
