@@ -149,9 +149,26 @@ pour la migration, si leur connecteur cible déjà Hivemind. Le contrôleur vali
 les identifiants et l'intervalle, sans contacter les services. Un intervalle
 absent avant le schéma 3 vaut `disabled` ; une clé absente depuis sa génération
 est refusée. Les anciennes valeurs `memory.graph.*` ne configurent pas LONG.
+En particulier, un schéma 3 sans intervalle pouvait passer le `check` de
+1.9.0 ; il est désormais refusé. Ajouter sous `memory.live` la ligne
+`consolidation_check_interval_hours: disabled` (ou un entier positif) avant
+de vérifier à nouveau. Les schémas 1 et 2 sans intervalle restent conformes
+avec une échéance désactivée.
+
+Un `check` vert ne prouve ni le routage du connecteur, ni la migration de
+l'instance, ni ses droits : un ancien alias non vide peut encore passer le
+contrôle de forme. La protection effective est la vérification de l'endpoint
+autorisé au démarrage. Les réservations d'identifiants internes restent du
+ressort du serveur ; le contrôle local vérifie la forme du `space_id`.
 La compatibilité de format n'autorise aucun repli vers les services Live/Graph.
 `update` préserve chaque octet de la configuration : la migration reste une
 modification explicite et vérifiable.
+
+En cas de retour au corpus 1.9.0, rétablir aussi sa forme de configuration
+imbriquée et vérifier un démarrage réellement compatible avec le service en
+place. Le `check` de 1.9.0 peut accepter une configuration plate qu'il ne sait
+pas exploiter : son résultat ne valide pas ce retour arrière. Ne jamais
+revenir automatiquement à un endpoint legacy retiré.
 
 ## Reprise, consolidation et LONG
 

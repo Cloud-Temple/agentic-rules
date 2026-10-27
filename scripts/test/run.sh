@@ -575,6 +575,20 @@ cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
 set_config "$H" space_id 'autre espace'
 "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
 check "un identifiant hors contrat Hivemind échoue" "$rc" "1"
+for val in -projet _projet; do
+  cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+  set_config "$H" space_id "$val"
+  "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+  check "le premier caractère non alphanumérique $val est refusé" "$rc" "1"
+done
+cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+long_id="$(printf '%064d' 0)"
+set_config "$H" space_id "$long_id"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un identifiant de 64 caractères reste conforme" "$rc" "0"
+set_config "$H" space_id "${long_id}0"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un identifiant de 65 caractères est refusé" "$rc" "1"
 for val in 0 00 -1 1.5 24h false; do
   cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
   set_config "$H" consolidation_check_interval_hours "$val"
@@ -618,6 +632,12 @@ review:
 CFG
 "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
 check "une configuration schéma 2 imbriquée reste conforme" "$rc" "0"
+# Un nom d'alias n'est pas une preuve d'endpoint : le contrôle hors ligne ne
+# doit pas faire croire qu'il a interrogé le client MCP.
+set_config "$H" server my-live-memory
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un ancien alias peut être conforme hors ligne sans prouver le routage" "$rc" "0"
+set_config "$H" server hivemind
 cp "$H/AGENTIC_RULES/project.config.yml" "$WORK/legacy.cfg"
 set_config "$H" schema_version 3
 "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?

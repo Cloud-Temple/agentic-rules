@@ -231,14 +231,15 @@ autorisé ; sans lui, aucun déclenchement autonome n'est garanti.
 Examiner les nouveautés non consolidées, l'âge des notes, la fraîcheur du
 résumé et les budgets avec les informations disponibles et des lectures
 ciblées. Consolider sur demande de mise à jour de la banque, lorsque des faits
-durables rendent le résumé obsolète, restent à synthétiser dans une banque
-vide, ou dépassent ses budgets. L'ancienneté seule ne suffit pas. Écrire d'abord
-les faits durables absents des notes. Une fin de session ne déclenche pas à elle
+durables rendent le résumé obsolète, nécessitent une première synthèse dans
+une banque vide, ou dépassent ses budgets. L'ancienneté seule ne suffit pas.
+Écrire d'abord les faits durables absents des notes. Une fin de session ne déclenche pas à elle
 seule une consolidation ; aucun GO humain supplémentaire n'est requis.
 
 Avant de soumettre, consulter la coordination et les files disponibles, par
-exemple `bank_consolidation_queues` ciblé sur l'espace. Si un travail est
-`queued` ou `running`, ne pas en ajouter. Réutiliser les mécanismes disponibles
+exemple `bank_consolidation_queues(space_ids="<espace>")` après vérification
+du type attendu par le schéma (`space_ids` est une chaîne dans le contrat
+1.6.4). Si un travail est `queued` ou `running`, ne pas en ajouter. Réutiliser les mécanismes disponibles
 sans inventer de verrou. La file Hivemind 1.6.4 est locale au processus et
 best-effort ; son état ne prouve pas une exclusion entre toutes les instances.
 
@@ -253,8 +254,9 @@ Un accusé `queued` ou `running` signifie « demandé », pas « terminé ». Co
 l'identifiant de travail. Le contrat actuel demande de rendre la main sans
 polling : le respecter ; `bank_consolidation_status` ne se consulte que sur
 une demande explicite de statut par l'utilisateur. Ne pas lire immédiatement
-MID en guise de polling. Après un timeout ambigu, ne pas resoumettre : attendre
-l'inspection de statut autorisée, puis vérifier le résultat avant un réessai.
+MID en guise de polling. Après un timeout ambigu, signaler l'incertitude et ne
+pas resoumettre : attendre une demande explicite de statut par l'utilisateur,
+puis vérifier le résultat avant un éventuel réessai.
 Un travail disparu de la file ne prouve pas la réussite. Après confirmation de
 terminaison, relire la banque et les notes selon le contrat du service. Aucune
 réduction de volume ou de latence n'est présumée.
@@ -295,8 +297,13 @@ noms natifs de droite, s'ils sont exposés, et jamais un ancien serveur.
 | `bank_list`, `bank_read`, `bank_read_all` | `mid_list`, `mid_read`, `mid_read_all` |
 | `bank_consolidate` | `mid_consolidate` |
 | `graph_push`, `graph_status` | `long_push`, `long_status` |
+| `bank_write`, `bank_delete` | `mid_write`, `mid_delete` — opérateur |
+| `graph_connect`, `graph_disconnect` | `long_connect`, `long_disconnect` — opérateur |
 
-`graph_connect` et `graph_disconnect` n'ont pas de remplaçant exposé à inventer.
+`mid_write`, `mid_delete`, `long_connect` et `long_disconnect` existent dans
+la référence, mais appartiennent à la surface opérateur, hors surface agent.
+Ne pas les appeler pendant le travail courant, même si un ancien alias est
+connu ; leur usage relève d'une maintenance distincte autorisée.
 Les outils de files `bank_consolidation_queues`, `bank_consolidation_status`
 et `bank_stale_spaces` gardent leur nom dans le contrat actuel. Vérifier le
 contrat de la version ciblée plutôt que renommer mécaniquement chaque API.

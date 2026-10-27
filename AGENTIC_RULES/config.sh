@@ -114,6 +114,7 @@ config_validate() {
   esac
   case "$space" in
     ''|disabled|TO_FILL) printf 'MEMOIRE NON RENSEIGNEE space_id requis\n'; rc=1 ;;
+    [-_]*) printf 'ESPACE INVALIDE space_id doit commencer par une lettre ou un chiffre\n'; rc=1 ;;
     *[!A-Za-z0-9_-]*) printf 'ESPACE INVALIDE space_id doit contenir lettres, chiffres, tirets ou underscores\n'; rc=1 ;;
     *) [ "${#space}" -le 64 ] || { printf 'ESPACE INVALIDE space_id depasse 64 caracteres\n'; rc=1; } ;;
   esac
