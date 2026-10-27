@@ -148,12 +148,13 @@ Les configurations imbriquées des schémas 1 à 3 restent lisibles comme alias
 pour la migration, si leur connecteur cible déjà Hivemind. Le contrôleur valide
 les identifiants et l'intervalle, sans contacter les services. Un intervalle
 absent avant le schéma 3 vaut `disabled` ; une clé absente depuis sa génération
-est refusée. Les anciennes valeurs `memory.graph.*` ne configurent pas LONG.
+est refusée.
 En particulier, un schéma 3 sans intervalle pouvait passer le `check` de
 1.9.0 ; il est désormais refusé. Ajouter sous `memory.live` la ligne
 `consolidation_check_interval_hours: disabled` (ou un entier positif) avant
 de vérifier à nouveau. Les schémas 1 et 2 sans intervalle restent conformes
-avec une échéance désactivée.
+avec une échéance désactivée. Les anciennes valeurs `memory.graph.*` ne
+configurent pas LONG.
 
 Un `check` vert ne prouve ni le routage du connecteur, ni la migration de
 l'instance, ni ses droits : un ancien alias non vide peut encore passer le

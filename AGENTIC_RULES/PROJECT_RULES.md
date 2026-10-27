@@ -297,8 +297,8 @@ noms natifs de droite, s'ils sont exposés, et jamais un ancien serveur.
 | `bank_list`, `bank_read`, `bank_read_all` | `mid_list`, `mid_read`, `mid_read_all` |
 | `bank_consolidate` | `mid_consolidate` |
 | `graph_push`, `graph_status` | `long_push`, `long_status` |
-| `bank_write`, `bank_delete` | `mid_write`, `mid_delete` — opérateur |
-| `graph_connect`, `graph_disconnect` | `long_connect`, `long_disconnect` — opérateur |
+| `bank_write`, `bank_delete` | `mid_write`, `mid_delete`, opérateur |
+| `graph_connect`, `graph_disconnect` | `long_connect`, `long_disconnect`, opérateur |
 
 `mid_write`, `mid_delete`, `long_connect` et `long_disconnect` existent dans
 la référence, mais appartiennent à la surface opérateur, hors surface agent.
