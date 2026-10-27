@@ -33,6 +33,16 @@ versionnement sémantique.
   et intervalles invalides, et les formats mélangés. Les contrôles de frontière
   des documents projet et de provenance restent en place.
 
+- Le comportement natif Hivemind est précisé : état local ou partagé et refus
+  de route, limites de Project Mesh V1, différence entre consolidation,
+  compaction automatique MID et archivage LONG durable. Les résultats partiels
+  ne se rejouent pas automatiquement et ne déclenchent pas une restauration.
+- La recherche LONG distingue documents et captures MID historiques, couverture
+  partielle et contexte temporel. Les résultats sont des preuves à évaluer,
+  sans assimiler date de capture et date de fait ni sérialiser des champs
+  textuels redondants. Les passations SHORT gardent décisions, blocages et
+  prochaine action ; une ancienne synthèse ne réactive pas une tâche.
+
 ### Migration requise
 
 La version cible est 1.9.1 pour cette transition, malgré un changement de

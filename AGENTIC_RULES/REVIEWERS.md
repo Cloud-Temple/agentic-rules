@@ -61,6 +61,8 @@ dépôts ne produisent pas des verdicts issus de configurations différentes.
   autorisées, sans URL privée ni secret. Le relecteur vérifie son accès réel
   via les outils natifs `space_summary` ou `space_rules`/`mid_*`, puis
   `short_read`, sans appeler un autre endpoint ni les anciens services.
+  Rapporter aussi l'état de coordination et les réserves qui limitent le
+  contexte lu ; des fichiers présents ne prouvent pas un état partagé sain.
   L'absence d'ambiguïté est à établir en amont ; si elle subsiste dans cette
   session non interactive, signaler le blocage sans verdict. Un accès établi
   par le pilote ne remplace pas cette lecture personnelle.

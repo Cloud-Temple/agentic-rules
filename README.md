@@ -194,6 +194,39 @@ le contrat actuel. Ne pas déclencher une opération LONG comme effet secondaire
 une liaison. `long_ingest` en 1.6.4 prépare un plan et ne prend pas en charge
 `apply` : ne pas le présenter comme une ingestion effectuée.
 
+## Fonctionnement natif Hivemind
+
+Les règles tiennent compte des mécanismes du service, au-delà des noms d'outils :
+
+- **État partagé :** lire le label de coordination déjà renvoyé au démarrage.
+  Un espace `local_only` est présent sans coordination Mesh ; un label sain
+  n'assure pas qu'une voie d'écriture partagée soit prise en charge. Un refus
+  n'autorise ni chemin local de secours ni écriture opérateur. Project Mesh V1
+  peut relier deux instances à la même mémoire logique, sans failover automatique
+  de l'agent ni outil MCP de couplage.
+- **Cycle de vie MID :** la consolidation, la compaction automatique DirectLocal
+  et l'archivage des captures sont des étapes distinctes. Le service peut gérer
+  les deux dernières selon sa configuration. Un résultat partiel ne doit pas
+  être rejoué aveuglément ; une capture conservée ou un travail admis ne prouvent
+  ni remplacement de MID ni indexation terminée. Les seuils restent côté service.
+- **Recherche LONG :** confronter les sources canoniques et les captures
+  historiques au MID courant. Lire les réserves de couverture, de contexte et
+  de temporalité ; une recherche partielle ne prouve pas l'absence d'un fait.
+  Les dates de capture/indexation ne datent pas les événements. Utiliser les
+  passages rendus avec leur contexte sans dupliquer tous les champs textuels.
+- **Passation :** garder dans SHORT les décisions, blocages et bilans utiles,
+  avec leur source et la prochaine action. Une synthèse compactée peut omettre
+  l'historique ou contenir une ancienne priorité ; elle n'est pas une instruction
+  de reprendre automatiquement ce travail.
+
+Les contrats ont été examinés sur Hivemind 1.6.4 et comparés à la 1.6.5, qui
+est une maintenance de dépendances et WAF pour les points étudiés. Le service
+et les capacités réellement exposées restent à vérifier à chaque déploiement.
+Aucun couplage Mesh, changement de paramètres serveur ou transfert de données
+n'est réalisé par la mise à jour de ces règles. Voir aussi le
+[contrat Project Mesh](https://github.com/Lesur-ai/hivemind/blob/v1.6.5/docs/PROJECT_MESH.md)
+et le [contrat des outils](https://github.com/Lesur-ai/hivemind/blob/v1.6.5/docs/MCP_TOOLS_SPEC.md).
+
 ## Tests
 
 ```bash

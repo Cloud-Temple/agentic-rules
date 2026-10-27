@@ -1,4 +1,4 @@
-# Mémoire du projet — Hivemind
+# Mémoire du projet : Hivemind
 
 ## Un service, un espace, trois horizons
 
@@ -61,11 +61,14 @@ pour ce projet. Le nom local du connecteur et `system_about` ne prouvent pas
 dans la configuration du client ; aucun endpoint privé ni secret dans les
 règles, exemples, notes ou sorties publiques.
 
-Des alias différents ne sont interchangeables que si cette autorité configurée
-établit explicitement leur équivalence d'endpoint. Un produit du même nom ou un
-espace homonyme sur une autre instance ne suffit pas. Ne pas scanner tous les
-serveurs mémoire, essayer une variante de l'espace, sélectionner une autre
-instance après un refus, ou déduire une équivalence d'un résultat de recherche.
+Deux alias d'un même endpoint exigent une équivalence établie par cette
+configuration. Project Mesh peut aussi partager une mémoire logique entre
+**deux instances distinctes en V1** : leurs URL différentes ne prouvent pas
+qu'il s'agit de deux projets. Le rattachement validé par le service et la
+configuration autorisée font foi, jamais le seul nom du produit ou de l'espace.
+Rester sur le connecteur désigné ; aucun basculement automatique vers un pair.
+Ne pas scanner les serveurs, essayer une variante de l'espace ou sélectionner
+une autre instance après un refus.
 Sans preuve de routage, signaler précisément l'information manquante et arrêter
 le démarrage ; seules les actions de rétablissement ci-dessous restent permises.
 
@@ -89,11 +92,45 @@ les droits ou l'identifiant d'espace comme effet secondaire. Sans preuve
 d'équivalence ou décision de migration, ne pas changer de serveur de sa propre
 initiative.
 
+## État de l'espace et Project Mesh
+
+Hivemind est le service mémoire ; Project Mesh est sa coordination partagée.
+Réutiliser `hive_status_label` déjà renvoyé par `space_summary` ou `space_info`,
+sans refaire une inspection globale lorsque l'information est disponible.
+
+| État renvoyé | Conduite de l'agent |
+| --- | --- |
+| `local_only` | Espace présent sans marqueur de coordination Hivemind/Mesh. Flux SHORT/MID normal si l'accès réel réussit ; le label ne valide aucun état partagé. |
+| `hivemind_healthy` | Coordination structurellement saine, pas une garantie que chaque opération soit prise en charge ou puisse écrire. Respecter les contrôles du service à chaque appel. |
+| `unsafe`, `resync_required` | Arrêter les mutations et le travail courant dépendant de ce contexte non vérifiable ; préserver l'état et produire un diagnostic en lecture seule. |
+| `hivemind_blocked` | Valeur réservée, non émise dans la référence V1 : traiter un tel refus comme `unsafe`, sans inventer de reprise. |
+| `not_a_space` | Ne conclure à l'absence que si l'accès et la cible sont établis et sans signal de réservation, corruption ou récupération. |
+
+Un échec de lecture du statut, ou une valeur que le contrat de l'instance ne
+permet pas d'interpréter, appelle le diagnostic ; ce n'est pas un nouveau label
+ni une autorisation de revenir au chemin local. Une banque lisible ne suffit
+pas si le service ne peut pas en établir le contexte utilisable.
+
+Le service porte les leases, le fencing et les commits ; le client ne les
+reconstitue pas à partir de LONG, d'un fichier isolé ou d'un label sain. Dans
+la référence 1.6.4/1.6.5, certaines voies d'écriture partagées, dont les notes
+SHORT et la consolidation courante, restent refusées même sur un espace sain.
+Un refus de route ou de voie non prise en charge impose l'arrêt : ne pas
+contourner par un appel opérateur, une écriture MID/S3 ou un ancien endpoint.
+Une admission de travail peut précéder ce refus dans le worker.
+
+La préparation, le couplage, la resynchronisation et l'éviction sont des
+opérations d'administration distinctes. Aucun outil MCP `mesh_*` n'est exposé
+à l'agent. Le couplage V1 concerne deux instances, avec tous les ACK attendus ;
+ne pas en déduire un quorum, une fusion hors ligne, l'ajout d'un troisième
+nœud ou une consolidation collective parallèle. Ne jamais préparer Mesh pour
+faire passer un démarrage qui fonctionne déjà sans coordination partagée.
+
 ## Au démarrage et à la reprise
 
 1. Résoudre le connecteur autorisé, puis établir l'accès réel à l'espace et son
-   identité. Un outil présent ou un droit `write` déclaré ne prouve pas une
-   écriture réussie sur cet espace.
+   identité. Tenir compte de l'état de coordination ci-dessus. Un outil présent
+   ou un droit `write` déclaré ne prouve pas une écriture réussie sur cet espace.
 2. Charger les règles de consolidation et le contexte MID. Utiliser
    `space_summary(space_id="<espace>")` si le service fournit bien les règles
    et la banque complète dans cette réponse. Sinon, lire `space_rules`, puis
@@ -109,6 +146,8 @@ initiative.
    concurrentes incompatibles imposent de compléter ou de signaler la limite,
    pas de conclure à une absence.
 5. Après une perte effective de contexte, charger ce qui manque ou a changé.
+   Un résumé compacté est une synthèse avec perte : une omission ne prouve pas
+   la clôture d'une tâche, et un ancien TODO ne remplace pas la demande actuelle.
    Ne pas refaire le démarrage complet à chaque message. Après consolidation,
    respecter son contrat de suivi avant toute vérification de résultat.
 
@@ -193,6 +232,12 @@ ne pas fournir ou inventer un auteur. Un jeton dédié par identité permet de
 préserver la provenance ; sa création et sa délégation restent du ressort du
 provisionnement autorisé, jamais d'un remplacement improvisé pendant la tâche.
 
+Consigner les décisions humaines qui guident le travail et les questions
+bloquantes utiles avant d'agir ou de les transmettre. En fin de bloc
+significatif, laisser un bilan bref avec état prouvé, points ouverts et
+prochaine action, pour qu'un autre agent puisse reprendre. Ce n'est ni une
+copie du chat ni une note supplémentaire à chaque micro-action.
+
 Une note porte un sujet, sa source et ses conséquences. Éviter les doublons,
 secrets, données personnelles de clients, extraits sensibles de production,
 sorties de commandes intégrales et copies de documents. Une référence suffit
@@ -261,6 +306,40 @@ Un travail disparu de la file ne prouve pas la réussite. Après confirmation de
 terminaison, relire la banque et les notes selon le contrat du service. Aucune
 réduction de volume ou de latence n'est présumée.
 
+### Résultat partiel, compaction et archives
+
+Si le résultat signale `partial_consolidation` ou `partial_delete`, une partie
+du travail peut déjà être appliquée. Conserver le résultat et les références
+utiles, signaler l'incertitude et ne pas resoumettre, restaurer ou supprimer
+les notes automatiquement. Le bloc `auto_compaction` décrit une étape distincte
+qui peut réussir ou échouer après la consolidation ; l'admission du premier
+travail ne prouve ni cette étape ni un archivage LONG.
+
+Hivemind peut compacter MID après une consolidation réussie, selon sa
+configuration et les voies prises en charge. Cette compaction est réservée
+au chemin DirectLocal dans la référence 1.6.4/1.6.5 ; ne pas la forcer sur un
+espace partagé. En cas de besoin de diagnostic, `long_status.mid_automation`
+indique les réglages effectifs, le seuil et le périmètre. Ne pas recopier ce
+seuil dans la configuration de l'agent, fabriquer des notes ou multiplier les
+consolidations pour provoquer une compaction. Une baisse de taille ne prouve
+pas que les faits utiles ont été conservés.
+
+Les préimages vérifiées de compaction peuvent alimenter automatiquement une
+archive historique LONG. Ce worker et son attente durable sont distincts de
+la file de consolidation volatile. Une capture peut exister après une
+compaction échouée : elle ne prouve pas que MID a été remplacé. Des captures
+restent accessibles même après indexation ; les effacer n'est pas un nettoyage
+ordinaire de la mémoire.
+
+`long_status.mid_archive_projection` sert au diagnostic ciblé d'un retard ou
+d'un blocage, sans boucle de surveillance. Une capture en attente n'est pas
+une ingestion terminée. Une archive en pause, une identité changée ou une
+preuve documentaire manquante exigent une maintenance identifiée. Préserver
+les sources, préimages et checkpoints ; ne pas refaire une capture, relier
+LONG ailleurs, réindexer ou restaurer pour contourner l'échec. La suspension
+du worker d'archives ne supprime pas les captures et ne coupe pas à elle seule
+la recherche documentaire LONG.
+
 ## LONG : recherche dérivée, pas une seconde configuration
 
 Cibler le même connecteur et `space_id`. Utiliser `long_query` pour retrouver
@@ -269,6 +348,30 @@ canonique avant d'agir. Si le chemin est déjà connu, lire directement la sourc
 Si LONG est indisponible, une recherche locale ciblée reste possible tant que
 SHORT/MID sont opérationnels ; ne pas connecter un ancien Graph pour contourner
 l'échec.
+
+Pour une question sur l'état actuel, partir de MID et des notes SHORT
+récentes. LONG cherche dans les documents et dans l'archive MID liée : un
+passage d'archive est une capture historique, pas le MID courant. `long_query`
+effectue une recherche par embeddings et graphe, sans réponse générée par un
+modèle de chat ; sa disponibilité dépend aussi du fournisseur d'embeddings.
+L'agent doit évaluer les passages et construire sa réponse sourcée.
+
+Consommer `rag_chunks[].text`, où identité et contexte sont déjà rendus,
+plutôt que recopier toutes les variantes textuelles redondantes. Garder les
+références, empreintes et identifiants de capture utiles à la vérification.
+Un score, une relation ou `retrieval_mode` ne prouvent pas un fait ; ne pas
+inventer les extrémités ou la direction d'une relation. Le paramètre `limit`
+vise les entités ; il ne fixe pas le budget de passages du service.
+
+Lire `partial` et `warnings` même lorsque `status` vaut `ok`. Une réserve de
+périmètre `mid_archive` signifie que l'historique n'est pas entièrement couvert.
+Un contexte de passage incomplet doit être complété dans sa source ou présenté
+avec cette limite, sans conclure à l'absence d'un événement. `context_only`
+indique que l'extraction d'occurrences n'a pas été demandée, pas qu'aucun
+événement n'existe. `captured_at` et `ingested_at` sont des dates techniques,
+pas les dates de validité des faits ; confirmer les dates historiques et les
+contradictions dans les preuves citées. Si seul LONG est dégradé, ne pas
+bloquer SHORT/MID qui restent opérationnels, ni réparer un Graph séparé.
 
 Une consolidation n'autorise aucun `long_push`, changement de liaison,
 provisionnement ou modification d'ontologie par l'agent. En 1.6.4, `long_push`
@@ -300,10 +403,15 @@ noms natifs de droite, s'ils sont exposés, et jamais un ancien serveur.
 | `bank_write`, `bank_delete` | `mid_write`, `mid_delete`, opérateur |
 | `graph_connect`, `graph_disconnect` | `long_connect`, `long_disconnect`, opérateur |
 
-`mid_write`, `mid_delete`, `long_connect` et `long_disconnect` existent dans
-la référence, mais appartiennent à la surface opérateur, hors surface agent.
-Ne pas les appeler pendant le travail courant, même si un ancien alias est
-connu ; leur usage relève d'une maintenance distincte autorisée.
+`mid_write`, `mid_delete`, `long_connect` et `long_disconnect` appartiennent
+à la surface opérateur. Il en va de même pour `bank_compact`, `mid_archive_retry`,
+`bank_repair`, `long_reindex`, les `backup_*`, `ontology_*`, `admin_*`, les
+mutations `space_update`/`space_update_rules`/`space_delete` et l'ingestion
+`long_ingest_async`. Ne pas les appeler dans une mission de développement
+courante, même si un nom est connu ou exposé ; leur usage relève d'une
+maintenance distincte autorisée, avec les droits et contrôles appropriés.
+`long_push` est bien un outil de la surface agent, mais sa disponibilité ne
+l'autorise pas comme effet secondaire d'une consolidation.
 Les outils de files `bank_consolidation_queues`, `bank_consolidation_status`
 et `bank_stale_spaces` gardent leur nom dans le contrat actuel. Vérifier le
 contrat de la version ciblée plutôt que renommer mécaniquement chaque API.
