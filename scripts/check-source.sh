@@ -77,13 +77,9 @@ done < <(cd AGENTIC_RULES && find . -mindepth 1 -print0)
 
 [ -x AGENTIC_RULES/agentic-rules.sh ] || { printf 'le script distribué n est pas exécutable\n'; rc=1; }
 
-if [ -f AGENTIC_RULES/project.config.yml ]; then
-  sed -e 's/[[:space:]]#.*$//' -e 's/^[[:space:]]*#.*$//' AGENTIC_RULES/project.config.yml \
-    | grep -q 'TO_FILL' \
-    && { printf 'le dépôt source laisse des TO_FILL dans sa propre configuration\n'; rc=1; }
-else
-  printf 'configuration du dépôt source absente : AGENTIC_RULES/project.config.yml\n'; rc=1
-fi
+# shellcheck source=../AGENTIC_RULES/config.sh
+source AGENTIC_RULES/config.sh
+config_validate AGENTIC_RULES/project.config.yml "$PWD" || rc=1
 
 [ "$rc" -eq 0 ] && printf 'source conforme\n' || printf 'source non conforme\n'
 exit "$rc"
