@@ -79,6 +79,7 @@ WORK="$(mktemp -d "${TMPDIR:-/tmp}/agentic test XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 SRC="$WORK/source git"
 make_source "$SRC"
+DIST_SOURCE="$SRC"
 
 printf 'install\n'
 T="$WORK/depot un"; mkdir -p "$T"
@@ -547,6 +548,120 @@ check "un parasite ordinaire fait toujours refuser la source" "$rc" "1"
 printf '%s' "$out" | grep -q 'LOCAL_RULES.md' \
   && ok "le parasite ordinaire est nommé" || ko "le parasite ordinaire est nommé"
 rm "$SRC/AGENTIC_RULES/LOCAL_RULES.md"
+
+printf 'configuration Hivemind et migration\n'
+H="$WORK/depot hivemind"; mkdir -p "$H"
+"$SCRIPT" install "$H" --ref v0.0.0-test --source "$DIST_SOURCE" >/dev/null 2>&1; rc=$?
+check "la fixture Hivemind s installe" "$rc" "0"
+[ "$rc" -eq 0 ] || exit 2
+fill_values "$H"
+cp "$H/AGENTIC_RULES/project.config.yml" "$WORK/hive.cfg"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "le schéma 4 plat est conforme" "$rc" "0"
+[ -f "$H/AGENTIC_RULES/config.sh" ] && ok "le validateur commun est distribué" || ko "le validateur commun est distribué"
+
+for key in server space_id consolidation_check_interval_hours; do
+  grep -v "^  $key:" "$WORK/hive.cfg" > "$H/AGENTIC_RULES/project.config.yml"
+  "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+  check "la clé mémoire schéma 4 absente $key échoue" "$rc" "1"
+done
+for val in disabled '""' 'https://example.invalid/mcp'; do
+  cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+  set_config "$H" server "$val"
+  "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+  check "le connecteur invalide $val échoue" "$rc" "1"
+done
+cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+set_config "$H" space_id 'autre espace'
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un identifiant hors contrat Hivemind échoue" "$rc" "1"
+for val in -projet _projet; do
+  cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+  set_config "$H" space_id "$val"
+  "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+  check "le premier caractère non alphanumérique $val est refusé" "$rc" "1"
+done
+cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+long_id="$(printf '%064d' 0)"
+set_config "$H" space_id "$long_id"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un identifiant de 64 caractères reste conforme" "$rc" "0"
+set_config "$H" space_id "${long_id}0"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un identifiant de 65 caractères est refusé" "$rc" "1"
+for val in 0 00 -1 1.5 24h false; do
+  cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+  set_config "$H" consolidation_check_interval_hours "$val"
+  "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+  check "l'intervalle invalide $val échoue" "$rc" "1"
+done
+for val in 1 24 disabled; do
+  cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+  set_config "$H" consolidation_check_interval_hours "$val"
+  "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+  check "l'intervalle $val est conforme" "$rc" "0"
+done
+for section in live graph; do
+  cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+  # Le bloc est vide : sa présence doit suffire, pas seulement ses scalaires.
+  sed -i'' -e "/^memory:/a\\  $section:" "$H/AGENTIC_RULES/project.config.yml"
+  out="$("$SCRIPT" check "$H" 2>&1)"; rc=$?
+  check "le mélange de formats avec $section échoue" "$rc" "1"
+  printf '%s' "$out" | grep -q 'MEMOIRE AMBIGUE' && ok "le mélange $section est nommé" || ko "le mélange $section est nommé"
+done
+cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
+set_config "$H" schema_version 3
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un format plat déclaré schéma 3 échoue" "$rc" "1"
+
+cat > "$H/AGENTIC_RULES/project.config.yml" <<'CFG'
+schema_version: 2
+project:
+  name: ancien-projet
+  public_language: fr
+  instructions_file: disabled
+memory:
+  live:
+    server: hivemind
+    space_id: ancien-projet
+  graph:
+    server: disabled
+    memory_id: disabled
+review:
+  reviewer_provider: claude
+CFG
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "une configuration schéma 2 imbriquée reste conforme" "$rc" "0"
+# Un nom d'alias n'est pas une preuve d'endpoint : le contrôle hors ligne ne
+# doit pas faire croire qu'il a interrogé le client MCP.
+set_config "$H" server my-live-memory
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "un ancien alias peut être conforme hors ligne sans prouver le routage" "$rc" "0"
+set_config "$H" server hivemind
+cp "$H/AGENTIC_RULES/project.config.yml" "$WORK/legacy.cfg"
+set_config "$H" schema_version 3
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "la clé connue absente en schéma 3 est refusée" "$rc" "1"
+sed -i'' -e '/^    space_id:/a\    consolidation_check_interval_hours: 24' "$H/AGENTIC_RULES/project.config.yml"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "une configuration schéma 3 imbriquée reste conforme" "$rc" "0"
+cp "$H/AGENTIC_RULES/project.config.yml" "$WORK/legacy3.cfg"
+"$SCRIPT" update "$H" --ref v0.0.1-test --source "$DIST_SOURCE" >/dev/null 2>&1; rc=$?
+check "la mise à jour d'une ancienne configuration réussit" "$rc" "0"
+cmp -s "$WORK/legacy3.cfg" "$H/AGENTIC_RULES/project.config.yml" \
+  && ok "update préserve chaque octet de la configuration legacy" || ko "update préserve chaque octet de la configuration legacy"
+"$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
+check "le consommateur mis à jour reste conforme sans conversion implicite" "$rc" "0"
+
+# Le contrôle source et le contrôle installé doivent refuser le même défaut.
+cp "$SRC/AGENTIC_RULES/project.config.yml" "$WORK/source.cfg"
+cp "$WORK/hive.cfg" "$SRC/AGENTIC_RULES/project.config.yml"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source accepte aussi le schéma 4" "$rc" "0"
+sed -i'' -e '/^  space_id:/d' "$SRC/AGENTIC_RULES/project.config.yml"
+"$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
+check "la source refuse aussi le space_id absent" "$rc" "1"
+cp "$WORK/source.cfg" "$SRC/AGENTIC_RULES/project.config.yml"
 
 printf '\n%d succès, %d échec(s)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

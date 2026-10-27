@@ -3,6 +3,67 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [1.9.1] - À publier
+
+### Modifié
+
+- [#25](https://github.com/Cloud-Temple/agentic-rules/issues/25) : Hivemind
+  remplace Live Memory et Graph Memory dans le corpus commun. SHORT, MID et
+  LONG utilisent un seul connecteur autorisé et un seul `space_id`. Le routage
+  se fonde sur la configuration MCP vérifiable ; la recherche sur tous les
+  serveurs et la substitution par espace homonyme sont retirées. La désignation
+  humaine entre espaces homonymes sur plusieurs serveurs, liée à cette ancienne
+  recherche, est remplacée par la résolution de l'instance déjà autorisée ;
+  toute ambiguïté persistante bloque le démarrage. Le GO reste réservé au merge.
+- Les appels mémoire utilisent les noms natifs `short_*`, `mid_*` et `long_*`.
+  Le démarrage peut charger règles et banque via `space_summary`, puis les
+  notes SHORT, avec vérification de complétude. La création distingue
+  `created`, `already_exists` et `partial`/`recovery.retry_safe`, sans champs
+  de réparation propres à l'ancien service. Les règles serveur peuvent être
+  administrées si les outils et droits requis existent ; ce n'est jamais un
+  effet secondaire de ce changement.
+- Le contrôle régulier de consolidation est conservé. Une soumission reste
+  distincte de sa terminaison ; le périmètre d'agent, le retour sans polling et
+  la restriction du statut détaillé à une demande utilisateur sont explicités.
+  LONG reste dérivé : aucun push ou provisionnement implicite par l'agent,
+  aucune ingestion annoncée sur le seul plan de `long_ingest`.
+- Le modèle de configuration passe au schéma 4 avec `memory.server`,
+  `memory.space_id` et l'intervalle de contrôle. Le validateur partagé entre
+  source et consommateurs refuse les clés mémoire manquantes, les identifiants
+  et intervalles invalides, et les formats mélangés. Les contrôles de frontière
+  des documents projet et de provenance restent en place.
+
+- Le comportement natif Hivemind est précisé : état local ou partagé et refus
+  de route, limites de Project Mesh V1, différence entre consolidation,
+  compaction automatique MID et archivage LONG durable. Les résultats partiels
+  ne se rejouent pas automatiquement et ne déclenchent pas une restauration.
+- La recherche LONG distingue documents et captures MID historiques, couverture
+  partielle et contexte temporel. Les résultats sont des preuves à évaluer,
+  sans assimiler date de capture et date de fait ni sérialiser des champs
+  textuels redondants. Les passations SHORT gardent décisions, blocages et
+  prochaine action ; une ancienne synthèse ne réactive pas une tâche.
+
+### Migration requise
+
+La version cible est 1.9.1 pour cette transition, malgré un changement de
+protocole et un prérequis de migration qui dépassent une correction sans effet
+de contrat. Cette numérotation ne doit pas être comprise comme une compatibilité
+transparente avec les anciens services.
+
+Le connecteur et l'espace doivent avoir été migrés vers Hivemind avant
+l'adoption de ce profil. La version 1.9.1 n'est ni une migration automatique,
+ni un déploiement de service : le protocole et le prérequis de connexion
+changent. Les configurations des schémas 1 à 3 restent lisibles comme alias
+si elles ciblent Hivemind, sans autoriser un fallback vers Live/Graph.
+`update` préserve leur contenu. Un schéma 3 sans intervalle, accepté par le
+`check` de 1.9.0, est désormais refusé : ajouter sous `memory.live`
+`consolidation_check_interval_hours: disabled` ou un entier positif. Les
+schémas 1 et 2 sans cette clé conservent une échéance désactivée. Un contrôle
+vert ne prouve ni le connecteur ni la migration effective.
+L'ancienne configuration Graph n'est pas un
+namespace LONG et n'est ni transférée ni supprimée implicitement. Le tag 1.9.0
+reste intact. Aucun modèle de revue ni point de GO humain n'est modifié.
+
 ## [1.9.0] - 2026-10-26
 
 Les PR [#24](https://github.com/Cloud-Temple/agentic-rules/pull/24) et
