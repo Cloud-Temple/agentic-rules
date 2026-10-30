@@ -43,6 +43,13 @@ versionnement sémantique.
   textuels redondants. Les passations SHORT gardent décisions, blocages et
   prochaine action ; une ancienne synthèse ne réactive pas une tâche.
 
+### Corrigé
+
+- Les tests du script de distribution passent aussi sur macOS. `sed -i''`
+  laissait sous BSD un fichier de sauvegarde `-e` dans `AGENTIC_RULES/`, que
+  le contrôle signalait comme ajout local, et l'empreinte d'arborescence
+  dépendait de `find -printf`. Le harnais n'emploie plus d'extension GNU.
+
 ### Migration requise
 
 La version cible est 1.9.1 pour cette transition, malgré un changement de
