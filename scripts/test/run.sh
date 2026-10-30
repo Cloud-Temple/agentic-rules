@@ -17,25 +17,39 @@ check(){ if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 (attendu «$3», obtenu �
 
 git_c() { git -C "$1" -c user.email=test@local -c user.name=test "${@:2}"; }
 
+# Le harnais tourne avec les outils GNU de la CI comme avec ceux de BSD et de
+# macOS : `find -printf` et `sed -i` sans suffixe y sont proscrits.
+if command -v sha256sum >/dev/null 2>&1; then SHA256=(sha256sum); else SHA256=(shasum -a 256); fi
+
+# `sed -i''` est lu par le sed de BSD comme `-i` suivi du suffixe `-e` : il
+# laisse un `project.config.yml-e` dans AGENTIC_RULES/, que le contrôle signale
+# à juste titre comme un ajout local. Le suffixe explicite vaut pour les deux.
+sed_i() {
+  local file="${*: -1}"
+  sed -i.bak "$@" && rm -f "$file.bak"
+}
+
 # Empreinte complète d'une cible : contenu de chaque fichier et arborescence.
-# Ce harnais reste lié à GNU, et l'assumer : `-printf` et `sha256sum` n'existent
-# pas partout. Mais une empreinte vide rendrait identiques deux cibles
-# quelconques, et les quatre comparaisons qui l'utilisent passeraient sans rien
-# comparer. Échouer bruyamment plutôt que silencieusement. Aucune des cibles
-# comparées n'est légitimement vide.
+# Une empreinte vide rendrait identiques deux cibles quelconques, et les quatre
+# comparaisons qui l'utilisent passeraient sans rien comparer. Échouer
+# bruyamment plutôt que silencieusement. Aucune des cibles comparées n'est
+# légitimement vide.
 snapshot() {
   local tree sums
-  # La moitié arborescence est celle qui dépend de `-printf`. Si elle se tait,
-  # les comparaisons ne portent plus que sur le contenu des fichiers, et un
-  # changement de type, de mode ou de structure passe inaperçu. Le garde-fou
-  # porte donc sur elle, pas sur la concaténation des deux : la moitié empreinte
-  # continue de produire des lignes et masquerait le silence de la première.
+  # La moitié arborescence porte le type et les droits, lus par `ls -ld`, qui
+  # les rend partout sous la même forme. Si elle se tait, les comparaisons ne
+  # portent plus que sur le contenu des fichiers, et un changement de type, de
+  # mode ou de structure passe inaperçu. Le garde-fou porte donc sur elle, pas
+  # sur la concaténation des deux : la moitié empreinte continue de produire
+  # des lignes et masquerait le silence de la première.
   # La fonction rend un code, elle ne quitte pas : appelée dans `$(...)`, un
   # `exit` ne tuerait que le sous-shell et la suite continuerait en vert. C'est
   # l'appelant qui arrête, et chaque appel est donc suivi de `|| exit 2`.
-  tree="$(cd "$1" && find . -mindepth 1 -printf '%y %m %p\n' | sort)"
-  [ -n "$tree" ] || { printf 'HARNAIS arborescence vide pour %s : find -printf indisponible\n' "$1" >&2; return 2; }
-  sums="$(cd "$1" && find . -mindepth 1 -type f -exec sha256sum {} + 2>/dev/null | sort)"
+  tree="$(cd "$1" && find . -mindepth 1 -print0 | while IFS= read -r -d '' p; do
+    printf '%s %s\n' "$(ls -ld "$p" | cut -c1-10)" "$p"
+  done | sort)"
+  [ -n "$tree" ] || { printf 'HARNAIS arborescence vide pour %s : find ou ls inutilisable\n' "$1" >&2; return 2; }
+  sums="$(cd "$1" && find . -mindepth 1 -type f -exec "${SHA256[@]}" {} + 2>/dev/null | sort)"
   printf '%s\n%s\n' "$tree" "$sums"
 }
 
@@ -64,7 +78,7 @@ make_source() {
 # Renseigne les valeurs seulement. Les commentaires restent intacts : c'est le
 # cas réel d'un dépôt correctement configuré.
 fill_values() {
-  sed -i'' -e 's/: TO_FILL/: valeur-test/' "$1/AGENTIC_RULES/project.config.yml"
+  sed_i -e 's/: TO_FILL/: valeur-test/' "$1/AGENTIC_RULES/project.config.yml"
   # instructions_file attend un chemin, pas une chaîne quelconque. Le cas
   # nominal d'un dépôt qui n'a pas d'instructions propres est `disabled`.
   set_config "$1" instructions_file disabled
@@ -72,7 +86,7 @@ fill_values() {
 
 # Remplace la valeur d'une clé dans la configuration d'une cible.
 set_config() {
-  sed -i'' -e "s|^\([[:space:]]*\)$2:.*|\1$2: $3|" "$1/AGENTIC_RULES/project.config.yml"
+  sed_i -e "s|^\([[:space:]]*\)$2:.*|\1$2: $3|" "$1/AGENTIC_RULES/project.config.yml"
 }
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/agentic test XXXXXX")"
@@ -329,8 +343,11 @@ cp "$WORK/cfg.bak" "$T/AGENTIC_RULES/project.config.yml"
 # Une configuration pareille est malformée, mais le contrôle ne doit pas se
 # fonder sur une valeur que personne d'autre ne lirait.
 cp "$T/AGENTIC_RULES/project.config.yml" "$WORK/cfg.bak2"
-sed -i'' -e 's|^\([[:space:]]*\)instructions_file: DESIGN/INSTRUCTIONS.md|\1instructions_file: DESIGN/N-EXISTE-PAS.md\n\1instructions_file: DESIGN/INSTRUCTIONS.md|' \
-  "$T/AGENTIC_RULES/project.config.yml"
+# Le `\n` d'un remplacement sed est une extension GNU : awk insère la ligne.
+awk '/^[[:space:]]*instructions_file: DESIGN\/INSTRUCTIONS.md$/ {
+  l = $0; sub(/DESIGN\/INSTRUCTIONS.md$/, "DESIGN/N-EXISTE-PAS.md", l); print l
+} { print }' "$T/AGENTIC_RULES/project.config.yml" > "$T/AGENTIC_RULES/cfg.tmp"
+mv "$T/AGENTIC_RULES/cfg.tmp" "$T/AGENTIC_RULES/project.config.yml"
 "$SCRIPT" check "$T" >/dev/null 2>&1; rc=$?
 check "une clé dupliquée retient la dernière valeur" "$rc" "0"
 cp "$WORK/cfg.bak2" "$T/AGENTIC_RULES/project.config.yml"
@@ -408,8 +425,8 @@ fill_values "$T5"
 check "check --remote réussit sur une copie fidèle" "$rc" "0"
 # Falsification cohérente : le fichier et son empreinte sont modifiés ensemble.
 printf '\nregle glissee en douce\n' >> "$T5/AGENTIC_RULES/MAIN_RULES.md"
-newh="$(sha256sum "$T5/AGENTIC_RULES/MAIN_RULES.md" | cut -d' ' -f1)"
-sed -i'' -e "s|^sha256 AGENTIC_RULES/MAIN_RULES.md .*|sha256 AGENTIC_RULES/MAIN_RULES.md $newh|" "$T5/AGENTIC_RULES/.provenance"
+newh="$("${SHA256[@]}" "$T5/AGENTIC_RULES/MAIN_RULES.md" | cut -d' ' -f1)"
+sed_i -e "s|^sha256 AGENTIC_RULES/MAIN_RULES.md .*|sha256 AGENTIC_RULES/MAIN_RULES.md $newh|" "$T5/AGENTIC_RULES/.provenance"
 "$SCRIPT" check "$T5" >/dev/null 2>&1; rc=$?
 check "le contrôle local ne voit pas une falsification cohérente" "$rc" "0"
 out="$("$SCRIPT" check "$T5" --remote --source "$SRC" 2>&1)"; rc=$?
@@ -604,7 +621,10 @@ done
 for section in live graph; do
   cp "$WORK/hive.cfg" "$H/AGENTIC_RULES/project.config.yml"
   # Le bloc est vide : sa présence doit suffire, pas seulement ses scalaires.
-  sed -i'' -e "/^memory:/a\\  $section:" "$H/AGENTIC_RULES/project.config.yml"
+  # `a\` suivi du texte sur la même ligne est une extension GNU.
+  awk -v l="  $section:" '{ print } /^memory:/ { print l }' \
+    "$H/AGENTIC_RULES/project.config.yml" > "$H/AGENTIC_RULES/cfg.tmp"
+  mv "$H/AGENTIC_RULES/cfg.tmp" "$H/AGENTIC_RULES/project.config.yml"
   out="$("$SCRIPT" check "$H" 2>&1)"; rc=$?
   check "le mélange de formats avec $section échoue" "$rc" "1"
   printf '%s' "$out" | grep -q 'MEMOIRE AMBIGUE' && ok "le mélange $section est nommé" || ko "le mélange $section est nommé"
@@ -642,7 +662,9 @@ cp "$H/AGENTIC_RULES/project.config.yml" "$WORK/legacy.cfg"
 set_config "$H" schema_version 3
 "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
 check "la clé connue absente en schéma 3 est refusée" "$rc" "1"
-sed -i'' -e '/^    space_id:/a\    consolidation_check_interval_hours: 24' "$H/AGENTIC_RULES/project.config.yml"
+awk '{ print } /^    space_id:/ { print "    consolidation_check_interval_hours: 24" }' \
+  "$H/AGENTIC_RULES/project.config.yml" > "$H/AGENTIC_RULES/cfg.tmp"
+mv "$H/AGENTIC_RULES/cfg.tmp" "$H/AGENTIC_RULES/project.config.yml"
 "$SCRIPT" check "$H" >/dev/null 2>&1; rc=$?
 check "une configuration schéma 3 imbriquée reste conforme" "$rc" "0"
 cp "$H/AGENTIC_RULES/project.config.yml" "$WORK/legacy3.cfg"
@@ -658,7 +680,7 @@ cp "$SRC/AGENTIC_RULES/project.config.yml" "$WORK/source.cfg"
 cp "$WORK/hive.cfg" "$SRC/AGENTIC_RULES/project.config.yml"
 "$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
 check "la source accepte aussi le schéma 4" "$rc" "0"
-sed -i'' -e '/^  space_id:/d' "$SRC/AGENTIC_RULES/project.config.yml"
+sed_i -e '/^  space_id:/d' "$SRC/AGENTIC_RULES/project.config.yml"
 "$SRC/scripts/check-source.sh" >/dev/null 2>&1; rc=$?
 check "la source refuse aussi le space_id absent" "$rc" "1"
 cp "$WORK/source.cfg" "$SRC/AGENTIC_RULES/project.config.yml"
