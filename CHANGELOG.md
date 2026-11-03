@@ -3,6 +3,16 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
+## [Non publié]
+
+### Modifié
+
+- La consolidation est demandée après chaque étape importante apportant des
+  faits durables nouveaux, après le bilan SHORT. Un travail déjà en cours ou
+  en attente reporte le contrôle au prochain jalon, à la reprise ou à l'échéance
+  existante, sans doublon ni polling. Les micro-actions et réveils inchangés
+  ne déclenchent rien ; un échec d'écriture SHORT interdit la soumission.
+
 ## [1.9.1] - À publier
 
 ### Modifié
