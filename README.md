@@ -180,8 +180,11 @@ par `short_note` ; l'identité provient du jeton, pas d'un paramètre d'auteur.
 Les relecteurs indépendants établissent personnellement la lecture et restent
 en lecture seule, sans création d'espace ni note mémoire.
 
-Le coordinateur contrôle la banque à la reprise et aux jalons. Pendant les
-longues sessions, l'intervalle est un entier positif en heures ; `24` est le
+Le coordinateur contrôle la banque à la reprise et aux jalons ; après chaque
+étape importante apportant des faits durables nouveaux, il consigne le bilan
+SHORT puis soumet une consolidation, sauf si un travail est déjà en cours ou
+en attente. Pendant les longues sessions, l'intervalle est un entier positif
+en heures ; `24` est le
 réglage initial, `disabled` désactive cette seule échéance. Il ne crée aucun
 minuteur. Le contrôle porte sur les nouveautés, la fraîcheur et les budgets,
 pas sur une consolidation aveugle à chaque réveil.
