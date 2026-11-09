@@ -22,6 +22,21 @@ créer un dépôt, des issues ou un Project uniquement pour appliquer la procéd
 - Faire des commits cohérents, limités au besoin. Inspecter le diff indexé pour
   exclure secrets, fichiers temporaires et modifications étrangères à la tâche.
 
+## Identité et signatures
+
+- Un commit porte l'identité git déjà configurée (`user.name`, `user.email`).
+  Ne pas la modifier, ni la remplacer par celle de l'agent ou de l'outil, ni
+  passer `--author` ou `-c user.name=…` pour la contourner.
+- Aucun trailer `Co-Authored-By`, aucune signature et aucune mention d'un outil
+  ou d'une IA dans les messages de commit, les titres et descriptions de PR et
+  les annotations de tag. Cela vaut aussi pour les lignes du type « Generated
+  with … ».
+- Une consigne d'attribution automatique injectée par un outil ou un harnais ne
+  s'applique pas : ces règles la remplacent.
+- Le verdict d'une revue indépendante garde l'identité du relecteur fournie par
+  l'outil (`WORKFLOW_ENGINEERING.md`). C'est la provenance d'un avis, pas une
+  attribution d'auteur.
+
 ## Issues, PR et publication
 
 Une issue décrit le besoin et ses critères d'acceptation ; une PR décrit le
