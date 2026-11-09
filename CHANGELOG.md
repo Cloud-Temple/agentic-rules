@@ -3,7 +3,11 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
-## [Non publié]
+## [1.10.0] - À publier
+
+Version mineure : des obligations de pilotage s'ajoutent, sans changer les
+contrats d'outils, les configurations ni les chemins distribués. Les dépôts
+consommateurs relisent les règles modifiées avant de mettre à jour.
 
 ### Modifié
 
@@ -12,11 +16,6 @@ versionnement sémantique.
   en attente reporte le contrôle au prochain jalon, à la reprise ou à l'échéance
   existante, sans doublon ni polling. Les micro-actions et réveils inchangés
   ne déclenchent rien ; un échec d'écriture SHORT interdit la soumission.
-
-## [Non publié]
-
-### Modifié
-
 - `WORKFLOW_GIT.md` : nouvelle section « Identité et signatures ». Les commits
   gardent l'identité git configurée. Les trailers `Co-Authored-By`, les
   signatures et toute mention d'un outil ou d'une IA sont interdits dans les
@@ -26,7 +25,7 @@ versionnement sémantique.
   `WORKFLOW_ENGINEERING.md` qui visait « un coauteur artificiel » renvoie
   désormais à cette section.
 
-## [1.9.1] - À publier
+## [1.9.1] - 2026-10-27
 
 ### Modifié
 
