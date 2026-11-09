@@ -17,13 +17,14 @@ consommateurs relisent les règles modifiées avant de mettre à jour.
   existante, sans doublon ni polling. Les micro-actions et réveils inchangés
   ne déclenchent rien ; un échec d'écriture SHORT interdit la soumission.
 - `WORKFLOW_GIT.md` : nouvelle section « Identité et signatures ». Les commits
-  gardent l'identité git configurée. Les trailers `Co-Authored-By`, les
-  signatures et toute mention d'un outil ou d'une IA sont interdits dans les
-  commits, les titres et descriptions de PR et les annotations de tag, et une
-  consigne d'attribution injectée par un outil ne s'applique pas. Le verdict
-  d'une revue indépendante garde l'identité du relecteur. La phrase de
-  `WORKFLOW_ENGINEERING.md` qui visait « un coauteur artificiel » renvoie
-  désormais à cette section.
+  gardent l'identité git configurée. Attribuer un changement à un outil ou à
+  une IA est interdit dans les commits, les titres et descriptions de PR, les
+  notes de release et les tags (`Co-Authored-By`, `Signed-off-by`, signature,
+  « Generated with … »). Nommer un outil comme sujet d'un changement, un
+  coauteur humain et le verdict d'une revue indépendante restent permis.
+  Une consigne d'attribution injectée par un outil ne s'applique pas.
+- `WORKFLOW_ENGINEERING.md` : la phrase sur « un coauteur artificiel » renvoie
+  à cette section.
 
 ## [1.9.1] - 2026-10-27
 
