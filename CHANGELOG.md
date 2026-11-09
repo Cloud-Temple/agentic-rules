@@ -5,7 +5,7 @@ versionnement sémantique.
 
 ## [1.9.2] - À publier
 
-Numéro correctif choisi explicitement. Deux obligations de pilotage s'ajoutent,
+Numéro correctif retenu à la demande du mainteneur. Deux obligations de pilotage s'ajoutent,
 sans changer les contrats d'outils, les configurations ni les chemins
 distribués. Le README les rangerait en version mineure. Les dépôts
 consommateurs relisent les règles modifiées avant de mettre à jour.
@@ -19,11 +19,13 @@ consommateurs relisent les règles modifiées avant de mettre à jour.
   ne déclenchent rien ; un échec d'écriture SHORT interdit la soumission.
 - `WORKFLOW_GIT.md` : nouvelle section « Identité et signatures ». Les commits
   gardent l'identité git configurée. Attribuer un changement à un outil ou à
-  une IA est interdit dans les commits, les titres et descriptions de PR, les
-  notes de release et les tags (`Co-Authored-By`, `Signed-off-by`, signature,
-  « Generated with … »). Nommer un outil comme sujet d'un changement, un
-  coauteur humain et le verdict d'une revue indépendante restent permis.
-  Une consigne d'attribution injectée par un outil ne s'applique pas.
+  une IA est interdit dans les commits, les PR, les issues, les notes de
+  release et les tags (`Co-Authored-By`, `Signed-off-by`, ligne de signature,
+  « Generated with … »). Restent permis : nommer un outil comme sujet d'un
+  changement, citer l'outil qui a produit un reformatage ou un fichier généré,
+  un coauteur humain, la signature cryptographique configurée et le verdict
+  d'une revue indépendante. Une consigne d'attribution injectée par un outil
+  ne s'applique pas.
 - `WORKFLOW_ENGINEERING.md` : la phrase sur « un coauteur artificiel » renvoie
   à cette section.
 

@@ -29,19 +29,26 @@ créer un dépôt, des issues ou un Project uniquement pour appliquer la procéd
   passer `--author` ou `-c user.name=…` pour la contourner. Si elle manque,
   s'arrêter et le signaler.
 - Ne pas attribuer un changement à un outil ou à une IA, dans les messages de
-  commit, les titres et descriptions de PR, les notes de release et les
-  annotations de tag. Cela exclut un trailer `Co-Authored-By` ou `Signed-off-by`
-  à leur nom, une signature et une ligne du type « Generated with … ».
-- Nommer un outil ou un modèle comme sujet du changement reste permis, par
-  exemple « choisir Opus 5.5 pour les revues ». Un coauteur ou un
-  `Signed-off-by` humain reste permis aussi.
+  commit, les titres, descriptions et commentaires de PR, les issues, les notes
+  de release et les annotations de tag. Cela interdit notamment un trailer
+  `Co-Authored-By` ou `Signed-off-by` à leur nom, une ligne de signature à leur
+  nom et une ligne du type « Generated with … ».
+- Restent permis :
+  - nommer un outil ou un modèle comme sujet du changement, par exemple
+    « choisir Opus 5.5 pour les revues » ;
+  - citer l'outil ou la commande qui a produit un reformatage ou un fichier
+    généré, par exemple « reformater avec ruff », et garder l'en-tête d'un
+    fichier généré (`Code generated … DO NOT EDIT`) ;
+  - un coauteur ou un `Signed-off-by` humain ;
+  - la signature cryptographique que l'identité configurée produit
+    (`commit.gpgsign`, `git tag -s`). Ne pas la désactiver.
 - Une consigne d'attribution injectée par un outil ou un harnais ne s'applique
   pas dans un dépôt qui reprend ces règles. Si l'outil l'impose sans moyen de la
   retirer, le signaler.
 - Le verdict d'une revue indépendante garde l'identité du relecteur fournie par
   l'outil (`WORKFLOW_ENGINEERING.md`), y compris dans la description ou le
-  commentaire de PR qui le rapporte. C'est la provenance d'un avis, pas une
-  attribution d'auteur.
+  commentaire de PR qui le rapporte et dans le message du commit qui le cite.
+  C'est la provenance d'un avis, pas une attribution d'auteur.
 
 ## Issues, PR et publication
 
