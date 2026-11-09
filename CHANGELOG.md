@@ -3,10 +3,11 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
-## [1.10.0] - À publier
+## [1.9.2] - À publier
 
-Version mineure : des obligations de pilotage s'ajoutent, sans changer les
-contrats d'outils, les configurations ni les chemins distribués. Les dépôts
+Numéro correctif choisi explicitement. Deux obligations de pilotage s'ajoutent,
+sans changer les contrats d'outils, les configurations ni les chemins
+distribués. Le README les rangerait en version mineure. Les dépôts
 consommateurs relisent les règles modifiées avant de mettre à jour.
 
 ### Modifié

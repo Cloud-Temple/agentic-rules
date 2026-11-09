@@ -41,11 +41,11 @@ sont contrôlés ; supprimer une clé ne permet pas de passer ce contrôle.
 ## Installer dans un dépôt
 
 ```bash
-git clone --depth 1 --branch v1.10.0 https://github.com/Cloud-Temple/agentic-rules.git /tmp/ar
-/tmp/ar/AGENTIC_RULES/agentic-rules.sh install /chemin/du/depot --ref v1.10.0 --source /tmp/ar
+git clone --depth 1 --branch v1.9.2 https://github.com/Cloud-Temple/agentic-rules.git /tmp/ar
+/tmp/ar/AGENTIC_RULES/agentic-rules.sh install /chemin/du/depot --ref v1.9.2 --source /tmp/ar
 ```
 
-Les exemples utilisent le tag `v1.10.0` une fois publié. Une PR de préparation
+Les exemples utilisent le tag `v1.9.2` une fois publié. Une PR de préparation
 ne constitue ni ce tag, ni une release, ni une mise à jour des consommateurs.
 
 L'installation prépare la charge utile complète dans un répertoire d'attente
@@ -60,7 +60,7 @@ Copier enfin `templates/workflows/agentic-conformity.yml` dans `.github/workflow
 ## Mettre à jour
 
 ```bash
-./AGENTIC_RULES/agentic-rules.sh update /chemin/du/depot --ref v1.10.0
+./AGENTIC_RULES/agentic-rules.sh update /chemin/du/depot --ref v1.9.2
 ```
 
 La mise à jour remplace les fichiers du corpus et préserve
