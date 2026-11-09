@@ -3,7 +3,12 @@
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnement sémantique.
 
-## [Non publié]
+## [1.9.2] - À publier
+
+Numéro correctif retenu à la demande du mainteneur. Deux obligations de pilotage s'ajoutent,
+sans changer les contrats d'outils, les configurations ni les chemins
+distribués. Le README les rangerait en version mineure. Les dépôts
+consommateurs relisent les règles modifiées avant de mettre à jour.
 
 ### Modifié
 
@@ -12,8 +17,19 @@ versionnement sémantique.
   en attente reporte le contrôle au prochain jalon, à la reprise ou à l'échéance
   existante, sans doublon ni polling. Les micro-actions et réveils inchangés
   ne déclenchent rien ; un échec d'écriture SHORT interdit la soumission.
+- `WORKFLOW_GIT.md` : nouvelle section « Identité et signatures ». Les commits
+  gardent l'identité git configurée. Attribuer un changement à un outil ou à
+  une IA est interdit dans les commits, les PR, les issues, les notes de
+  release et les tags (`Co-Authored-By`, `Signed-off-by`, ligne de signature,
+  « Generated with … »). Restent permis : nommer un outil comme sujet d'un
+  changement, citer l'outil qui a produit un reformatage ou un fichier généré,
+  un coauteur humain, la signature cryptographique configurée et le verdict
+  d'une revue indépendante. Une consigne d'attribution injectée par un outil
+  ne s'applique pas.
+- `WORKFLOW_ENGINEERING.md` : la phrase sur « un coauteur artificiel » renvoie
+  à cette section.
 
-## [1.9.1] - À publier
+## [1.9.1] - 2026-10-27
 
 ### Modifié
 
